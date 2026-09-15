@@ -52,8 +52,13 @@ export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Prop
         autoCorrect={false}
         onSubmitEditing={handleUnlock}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
-      {busy ? <ActivityIndicator /> : <Button title="Unlock" onPress={handleUnlock} />}
+      {/* Fixed-height slots so an error appearing / the button<->spinner swap
+          don't shift the rest of the form — that reflow is what read as a
+          "flicker" on a near-instant (offline) check. */}
+      <View style={styles.errorSlot}>{error && <Text style={styles.error}>{error}</Text>}</View>
+      <View style={styles.buttonSlot}>
+        {busy ? <ActivityIndicator /> : <Button title="Unlock" onPress={handleUnlock} />}
+      </View>
       <Text style={styles.link} onPress={onUseDifferentAccount}>
         Log in / create a different account
       </Text>
@@ -76,6 +81,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 12 },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16 },
+  errorSlot: { minHeight: 20, justifyContent: 'center' },
   error: { color: '#c0392b', textAlign: 'center' },
+  buttonSlot: { minHeight: 44, justifyContent: 'center' },
   link: { color: '#2d6cdf', textAlign: 'center', marginTop: 16 },
 });
