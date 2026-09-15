@@ -39,31 +39,36 @@ export default function EntryScreen({ encryptionKey, entryId, onDone }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Button title="Cancel" onPress={onDone} />
-        <Text style={styles.headerTitle}>{entryId ? 'Edit Entry' : 'New Entry'}</Text>
-        <Button title="Save" onPress={handleSave} />
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Button title="Cancel" onPress={onDone} />
+          <Text style={styles.headerTitle}>{entryId ? 'Edit Entry' : 'New Entry'}</Text>
+          <Button title="Save" onPress={handleSave} />
+        </View>
+        <TextInput
+          style={styles.titleInput}
+          placeholder="Title"
+          value={title}
+          onChangeText={setTitle}
+        />
+        <TextInput
+          style={styles.bodyInput}
+          placeholder="Write what's on your mind..."
+          value={body}
+          onChangeText={setBody}
+          multiline
+          textAlignVertical="top"
+        />
       </View>
-      <TextInput
-        style={styles.titleInput}
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={styles.bodyInput}
-        placeholder="Write what's on your mind..."
-        value={body}
-        onChangeText={setBody}
-        multiline
-        textAlignVertical="top"
-      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flexGrow: 1, backgroundColor: '#fff' },
+  // Matches HomeScreen's content cap so wide/ultrawide windows don't stretch
+  // a single text column edge-to-edge.
+  content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   headerTitle: { fontSize: 16, fontWeight: '600' },
   titleInput: { fontSize: 20, fontWeight: '700', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 },

@@ -86,7 +86,17 @@ export default function AuthScreen({ onAuthenticated }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12, backgroundColor: '#fff' },
+  // Capped + centered so inputs don't stretch edge-to-edge on wide/ultrawide windows.
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    gap: 12,
+    backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+  },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 12 },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16 },

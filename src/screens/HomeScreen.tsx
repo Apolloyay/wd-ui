@@ -40,33 +40,35 @@ export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, ref
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Your Entries</Text>
-          <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus)}</Text>
-        </View>
-        <Pressable style={styles.newButton} onPress={onNewEntry}>
-          <Text style={styles.newButtonText}>+ New</Text>
-        </Pressable>
-      </View>
-
-      {!loading && entries.length === 0 && (
-        <Text style={styles.empty}>No entries yet — tap "+ New" to write your first one.</Text>
-      )}
-
-      <FlatList
-        data={entries}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Pressable style={styles.card} onPress={() => onOpenEntry(item.id)}>
-            <Text style={styles.cardTitle}>{item.title || '(untitled)'}</Text>
-            <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleString()}</Text>
-            <Text numberOfLines={2} style={styles.cardBody}>
-              {item.body}
-            </Text>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Your Entries</Text>
+            <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus)}</Text>
+          </View>
+          <Pressable style={styles.newButton} onPress={onNewEntry}>
+            <Text style={styles.newButtonText}>+ New</Text>
           </Pressable>
+        </View>
+
+        {!loading && entries.length === 0 && (
+          <Text style={styles.empty}>No entries yet — tap "+ New" to write your first one.</Text>
         )}
-      />
+
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Pressable style={styles.card} onPress={() => onOpenEntry(item.id)}>
+              <Text style={styles.cardTitle}>{item.title || '(untitled)'}</Text>
+              <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleString()}</Text>
+              <Text numberOfLines={2} style={styles.cardBody}>
+                {item.body}
+              </Text>
+            </Pressable>
+          )}
+        />
+      </View>
     </View>
   );
 }
@@ -95,7 +97,10 @@ function syncStatusLabel(status: SyncStatus): string {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  // On wide/ultrawide desktop windows, a full-bleed edge-to-edge layout reads
+  // poorly — cap the content width and center it like a normal web page.
+  content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   title: { fontSize: 24, fontWeight: '700' },
   syncStatus: { fontSize: 12, color: '#888', marginTop: 2 },
