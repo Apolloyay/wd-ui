@@ -1,40 +1,38 @@
 import { useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { deriveKeyFromPassphrase, generateSalt, type EncryptionKey } from '../crypto/crypto';
-import { loadSalt, saveSalt } from '../crypto/keyStore';
+import { deriveKeyFromPassphrase, verifyCanary, type EncryptionKey } from '../crypto/crypto';
+import { loadCanary, loadSalt } from '../crypto/keyStore';
 
 interface Props {
   onUnlocked: (key: EncryptionKey) => void;
+  onUseDifferentAccount: () => void;
 }
 
 /**
- * Very first cut of the unlock flow: derives the encryption key from a
- * passphrase the user chooses. There is no server-side auth wired up yet —
- * this only protects the local database. See server/README.md for the
- * backend piece that adds account-based cloud sync on top of this.
+ * Returning-user unlock — fully offline. We already have this device's
+ * salt + canary from a previous login/register (AuthScreen), so we just
+ * re-derive the key and check it against the canary; no network call.
  */
-export default function UnlockScreen({ onUnlocked }: Props) {
+export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Props) {
   const [passphrase, setPassphrase] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = async () => {
-    if (passphrase.length < 8) {
-      setError('Use at least 8 characters — this passphrase protects your entries.');
-      return;
-    }
+  const handleUnlock = async () => {
     setBusy(true);
     setError(null);
     try {
-      let salt = await loadSalt();
-      if (!salt) {
-        salt = generateSalt();
-        await saveSalt(salt);
+      const [salt, canary] = await Promise.all([loadSalt(), loadCanary()]);
+      if (!salt || !canary) {
+        setError('No account found on this device — use "Log in / create account" below.');
+        return;
       }
       const key = deriveKeyFromPassphrase(passphrase, salt);
+      if (!verifyCanary(key, canary)) {
+        setError('Incorrect passphrase.');
+        return;
+      }
       onUnlocked(key);
-    } catch (e) {
-      setError('Could not unlock. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -43,7 +41,7 @@ export default function UnlockScreen({ onUnlocked }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>We Diary</Text>
-      <Text style={styles.subtitle}>Enter your passphrase to unlock your entries</Text>
+      <Text style={styles.subtitle}>Enter your passphrase to unlock</Text>
       <TextInput
         style={styles.input}
         placeholder="Passphrase"
@@ -52,9 +50,13 @@ export default function UnlockScreen({ onUnlocked }: Props) {
         onChangeText={setPassphrase}
         autoCapitalize="none"
         autoCorrect={false}
+        onSubmitEditing={handleUnlock}
       />
       {error && <Text style={styles.error}>{error}</Text>}
-      {busy ? <ActivityIndicator /> : <Button title="Continue" onPress={handleContinue} />}
+      {busy ? <ActivityIndicator /> : <Button title="Unlock" onPress={handleUnlock} />}
+      <Text style={styles.link} onPress={onUseDifferentAccount}>
+        Log in / create a different account
+      </Text>
     </View>
   );
 }
@@ -65,4 +67,5 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 12 },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16 },
   error: { color: '#c0392b', textAlign: 'center' },
+  link: { color: '#2d6cdf', textAlign: 'center', marginTop: 16 },
 });

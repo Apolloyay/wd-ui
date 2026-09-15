@@ -1,18 +1,20 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import type { Canary } from './crypto';
 
 /**
- * Holds the user's derived encryption key material between app launches
- * without asking for the passphrase every time.
+ * Holds what a returning user's device needs to unlock offline: the salt
+ * (needed to re-derive the key from a passphrase) and a canary (needed to
+ * check that passphrase is actually right — see crypto.ts). Neither value
+ * is secret on its own — the salt is just per-user randomness, and the
+ * canary is useless without the key it was encrypted with — so unlike the
+ * access token, storing them in web localStorage isn't a security downgrade.
  *
  * - Native (iOS/Android): expo-secure-store -> Keychain / Keystore. Safe.
- * - Web: expo-secure-store has NO web implementation. We fall back to
- *   localStorage, which is NOT secure against XSS. This is a placeholder —
- *   before shipping the web app, replace this with a non-extractable
- *   CryptoKey kept in IndexedDB via the Web Crypto API, or simply require
- *   re-entering the passphrase each session on web.
+ * - Web: expo-secure-store has NO web implementation, so we use localStorage.
  */
 const SALT_KEY = 'wediary.key_salt';
+const CANARY_KEY = 'wediary.canary';
 
 export async function saveSalt(saltBase64: string): Promise<void> {
   if (Platform.OS === 'web') {
@@ -35,4 +37,26 @@ export async function clearSalt(): Promise<void> {
     return;
   }
   await SecureStore.deleteItemAsync(SALT_KEY);
+}
+
+export async function saveCanary(canary: Canary): Promise<void> {
+  const value = JSON.stringify(canary);
+  if (Platform.OS === 'web') {
+    window.localStorage.setItem(CANARY_KEY, value);
+    return;
+  }
+  await SecureStore.setItemAsync(CANARY_KEY, value);
+}
+
+export async function loadCanary(): Promise<Canary | null> {
+  const raw = Platform.OS === 'web' ? window.localStorage.getItem(CANARY_KEY) : await SecureStore.getItemAsync(CANARY_KEY);
+  return raw ? (JSON.parse(raw) as Canary) : null;
+}
+
+export async function clearCanary(): Promise<void> {
+  if (Platform.OS === 'web') {
+    window.localStorage.removeItem(CANARY_KEY);
+    return;
+  }
+  await SecureStore.deleteItemAsync(CANARY_KEY);
 }

@@ -84,7 +84,72 @@ export async function deleteEntry(id: string): Promise<void> {
   await db.runAsync('DELETE FROM entries WHERE id = ?', id);
 }
 
-interface EncryptedEntryRecordRow {
+// --- Sync support -----------------------------------------------------
+// Everything below moves ciphertext only; it never needs the encryption
+// key, since the server (and the sync wire format) never sees plaintext.
+
+/** Rows with local changes the server hasn't seen yet. */
+export async function getDirtyRows(): Promise<EncryptedEntryRecordRow[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<EncryptedEntryRecordRow>('SELECT * FROM entries WHERE dirty = 1');
+}
+
+/**
+ * Clears the dirty flag for rows that were successfully pushed — but only
+ * if they're still at the version we pushed. If the user edited an entry
+ * again mid-sync (bumping its version), we leave it dirty so the next sync
+ * picks up that newer edit instead of silently dropping it.
+ */
+export async function markRowsSyncedIfUnchanged(pushed: { id: string; version: number }[]): Promise<void> {
+  const db = await getDatabase();
+  for (const row of pushed) {
+    await db.runAsync('UPDATE entries SET dirty = 0 WHERE id = ? AND version = ?', row.id, row.version);
+  }
+}
+
+/** Applies changes pulled from the server. Never overwrites a newer, not-yet-pushed local edit. */
+export async function upsertFromServer(records: EncryptedEntryRecordRow[]): Promise<void> {
+  const db = await getDatabase();
+  for (const r of records) {
+    const existing = await db.getFirstAsync<EncryptedEntryRecordRow>('SELECT * FROM entries WHERE id = ?', r.id);
+    if (existing?.dirty && existing.updated_at >= r.updated_at) {
+      continue;
+    }
+    await db.runAsync(
+      `INSERT INTO entries (id, ciphertext, nonce, created_at, updated_at, version, dirty)
+       VALUES (?, ?, ?, ?, ?, ?, 0)
+       ON CONFLICT(id) DO UPDATE SET
+         ciphertext = excluded.ciphertext,
+         nonce = excluded.nonce,
+         updated_at = excluded.updated_at,
+         version = excluded.version,
+         dirty = 0`,
+      r.id,
+      r.ciphertext,
+      r.nonce,
+      r.created_at,
+      r.updated_at,
+      r.version
+    );
+  }
+}
+
+export async function getLastSyncedAt(): Promise<string | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM meta WHERE key = ?', 'lastSyncedAt');
+  return row?.value ?? null;
+}
+
+export async function setLastSyncedAt(iso: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT INTO meta (key, value) VALUES ('lastSyncedAt', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    iso
+  );
+}
+
+export interface EncryptedEntryRecordRow {
   id: string;
   ciphertext: string;
   nonce: string;

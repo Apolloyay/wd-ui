@@ -53,6 +53,31 @@ export function decrypt(ciphertextBase64: string, nonceBase64: string, key: Encr
   return new TextDecoder().decode(plaintextBytes);
 }
 
+const CANARY_PLAINTEXT = 'wediary-passphrase-check-v1';
+
+export interface Canary {
+  ciphertext: string;
+  nonce: string;
+}
+
+/**
+ * A known plaintext encrypted with the user's key, stored locally so a
+ * later app launch can check "is this the right passphrase?" without any
+ * network call — decrypt the canary and see if it comes back unchanged.
+ * Wrong passphrase -> wrong key -> AES-GCM auth tag fails -> decrypt throws.
+ */
+export function createCanary(key: EncryptionKey): Canary {
+  return encrypt(CANARY_PLAINTEXT, key);
+}
+
+export function verifyCanary(key: EncryptionKey, canary: Canary): boolean {
+  try {
+    return decrypt(canary.ciphertext, canary.nonce, key) === CANARY_PLAINTEXT;
+  } catch {
+    return false; // wrong key -> GCM tag mismatch
+  }
+}
+
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);

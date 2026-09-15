@@ -2,18 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { EncryptionKey } from '../crypto/crypto';
 import { listEntries } from '../db/entriesRepository';
+import { syncNow } from '../sync/syncService';
 import type { DiaryEntry } from '../types/entry';
 
 interface Props {
   encryptionKey: EncryptionKey;
   onNewEntry: () => void;
   onOpenEntry: (id: string) => void;
-  refreshToken: number; // bump this after creating/editing an entry to refetch
+  refreshToken: number; // bump this after creating/editing an entry to refetch + resync
 }
+
+type SyncStatus = 'idle' | 'syncing' | 'synced' | 'offline' | 'signed-out' | 'error';
 
 export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, refreshToken }: Props) {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -23,13 +27,24 @@ export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, ref
   }, [encryptionKey]);
 
   useEffect(() => {
-    refresh();
+    // Sync first (may pull in changes from other devices), then load
+    // whatever's now in the local DB either way — sync failures shouldn't
+    // block reading what's already saved locally.
+    (async () => {
+      setSyncStatus('syncing');
+      const result = await syncNow();
+      setSyncStatus(result.ok ? 'synced' : mapFailureReason(result.reason));
+      await refresh();
+    })();
   }, [refresh, refreshToken]);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Your Entries</Text>
+        <View>
+          <Text style={styles.title}>Your Entries</Text>
+          <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus)}</Text>
+        </View>
         <Pressable style={styles.newButton} onPress={onNewEntry}>
           <Text style={styles.newButtonText}>+ New</Text>
         </Pressable>
@@ -56,10 +71,34 @@ export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, ref
   );
 }
 
+function mapFailureReason(reason: 'signed-out' | 'network' | 'server'): SyncStatus {
+  if (reason === 'network') return 'offline';
+  if (reason === 'server') return 'error';
+  return 'signed-out';
+}
+
+function syncStatusLabel(status: SyncStatus): string {
+  switch (status) {
+    case 'syncing':
+      return 'Syncing…';
+    case 'synced':
+      return 'Synced';
+    case 'offline':
+      return 'Offline — changes saved on this device';
+    case 'signed-out':
+      return '';
+    case 'error':
+      return 'Sync error — will retry later';
+    default:
+      return '';
+  }
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   title: { fontSize: 24, fontWeight: '700' },
+  syncStatus: { fontSize: 12, color: '#888', marginTop: 2 },
   newButton: { backgroundColor: '#2d6cdf', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   newButtonText: { color: '#fff', fontWeight: '600' },
   empty: { textAlign: 'center', color: '#888', marginTop: 40 },

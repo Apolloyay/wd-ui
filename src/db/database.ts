@@ -33,6 +33,10 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       version INTEGER NOT NULL DEFAULT 1,
       dirty INTEGER NOT NULL DEFAULT 1
     );
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
   `);
   return db;
 }
