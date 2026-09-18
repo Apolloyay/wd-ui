@@ -7,6 +7,7 @@ import { listEntries } from '../db/entriesRepository';
 import { getImageBlob } from '../db/imageBlobRepository';
 import { bodyToPlainText } from '../richtext/bodyText';
 import { usePeriodicSync } from '../sync/useSync';
+import { colors } from '../theme/colors';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 import type { ImageBlob } from '../types/image';
@@ -150,33 +151,48 @@ export default function MemoriesScreen({ encryptionKey, onBack, onOpenEntry }: P
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   backRow: { marginBottom: 8 },
-  backText: { fontSize: 14, color: '#2d6cdf', fontWeight: '600' },
-  title: { fontSize: 24, fontWeight: '700' },
-  subtitle: { fontSize: 13, color: '#888', marginTop: 2, marginBottom: 12 },
+  backText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2, marginBottom: 12 },
   showHiddenToggle: { alignSelf: 'flex-start', marginBottom: 16 },
-  showHiddenText: { fontSize: 12, color: '#2d6cdf', fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#888', marginTop: 40 },
+  showHiddenText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
+  empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
   group: { marginBottom: 20 },
-  groupLabel: { fontSize: 13, fontWeight: '700', color: '#2d6cdf', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.04 },
-  card: { flexDirection: 'row', padding: 12, borderRadius: 10, backgroundColor: '#f4f4f6', marginBottom: 10, gap: 12 },
-  cardThumb: { width: 64, height: 64, borderRadius: 8, backgroundColor: '#eef1f6' },
+  groupLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.04,
+  },
+  card: { flexDirection: 'row', padding: 12, borderRadius: 16, backgroundColor: colors.card, marginBottom: 10, gap: 12 },
+  cardThumb: { width: 64, height: 64, borderRadius: 12, backgroundColor: colors.chip },
   cardThumbLoading: { alignItems: 'center', justifyContent: 'center' },
   cardBody: { flex: 1 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  cardTitle: { fontSize: 15, fontWeight: '600', flexShrink: 1 },
-  cardBook: { fontSize: 11, color: '#2d6cdf', fontWeight: '600', backgroundColor: '#e3ecfb', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  cardTitle: { fontSize: 15, fontWeight: '700', flexShrink: 1, color: colors.text },
+  cardBook: {
+    fontSize: 11,
+    color: colors.primary,
+    fontWeight: '600',
+    backgroundColor: colors.chipTag,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
   hiddenBadge: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#c0392b',
-    backgroundColor: '#fdecea',
+    color: colors.danger,
+    backgroundColor: colors.dangerBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
   },
-  cardDate: { fontSize: 11, color: '#888', marginTop: 2, marginBottom: 4 },
-  cardText: { fontSize: 13, color: '#333' },
+  cardDate: { fontSize: 11, color: colors.textMuted, marginTop: 2, marginBottom: 4 },
+  cardText: { fontSize: 13, color: colors.text },
 });

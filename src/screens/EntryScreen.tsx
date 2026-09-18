@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Button,
   Image,
   Modal,
   Pressable,
@@ -26,6 +25,8 @@ import { reverseGeocode } from '../location/reverseGeocode';
 import { fetchWeather, weatherCodeToIcon } from '../location/weather';
 import RichTextEditor from '../richtext/RichTextEditor';
 import { bodyToPlainText, plainTextToEditableHtml } from '../richtext/bodyText';
+import Button from '../theme/Button';
+import { colors } from '../theme/colors';
 import type { DiaryEntry, EntryComment, EntryImage, ImageOverlay } from '../types/entry';
 import type { ImageBlob } from '../types/image';
 import type { SavedPlace } from '../types/place';
@@ -625,7 +626,7 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
         <View style={styles.locationButtonRow}>
           <Pressable style={styles.smallButton} onPress={handleUseCurrentLocation} disabled={locationBusy}>
             {locationBusy ? (
-              <ActivityIndicator size="small" color="#2d6cdf" />
+              <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <Text style={styles.smallButtonText}>{t('entry.locationUseCurrent')}</Text>
             )}
@@ -693,7 +694,7 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
         {exportError && <Text style={styles.imageError}>{exportError}</Text>}
         <Pressable style={styles.privacyButton} onPress={handleExportPdf} disabled={exporting}>
           {exporting ? (
-            <ActivityIndicator size="small" color="#2d6cdf" />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <Text style={styles.privacyButtonText}>{t('entry.exportButton')}</Text>
           )}
@@ -715,26 +716,43 @@ function saveStatusLabel(status: SaveStatus, t: (key: string) => string): string
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#fff' },
+  container: { flexGrow: 1, backgroundColor: colors.background },
   // Matches HomeScreen's content cap so wide/ultrawide windows don't stretch
   // a single text column edge-to-edge.
   content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  headerTitle: { fontSize: 16, fontWeight: '600' },
-  saveStatus: { fontSize: 12, color: '#888', minWidth: 60, textAlign: 'right' },
-  titleInput: { fontSize: 20, fontWeight: '700', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 },
-  tagsLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginTop: 20, marginBottom: 8 },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  saveStatus: { fontSize: 12, color: colors.textMuted, minWidth: 60, textAlign: 'right' },
+  titleInput: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    paddingBottom: 8,
+    color: colors.text,
+  },
+  tagsLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 8 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  tagChip: { backgroundColor: '#eef1f6', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
-  tagChipText: { fontSize: 12, color: '#444' },
-  tagInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
-  imageError: { color: '#c0392b', fontSize: 13, marginBottom: 8 },
-  imageWarning: { color: '#b8860b', fontSize: 12, marginBottom: 8 },
+  tagChip: { backgroundColor: colors.chip, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  tagChipText: { fontSize: 12, color: colors.textDim },
+  tagInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    backgroundColor: colors.white,
+    color: colors.text,
+  },
+  imageError: { color: colors.danger, fontSize: 13, marginBottom: 8 },
+  imageWarning: { color: colors.warning, fontSize: 12, marginBottom: 8 },
   imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
   imageThumbWrap: { position: 'relative' },
-  imageThumb: { width: 84, height: 84, borderRadius: 8, backgroundColor: '#eef1f6' },
+  imageThumb: { width: 84, height: 84, borderRadius: 14, backgroundColor: colors.chip },
   imageUnavailable: { alignItems: 'center', justifyContent: 'center' },
-  imageUnavailableText: { fontSize: 10, color: '#888', textAlign: 'center', paddingHorizontal: 4 },
+  imageUnavailableText: { fontSize: 10, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 4 },
   imageRemoveButton: {
     position: 'absolute',
     top: -6,
@@ -742,20 +760,20 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#c0392b',
+    backgroundColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imageRemoveButtonText: { color: '#fff', fontSize: 13, lineHeight: 14 },
+  imageRemoveButtonText: { color: colors.white, fontSize: 13, lineHeight: 14 },
   imageAddButton: {
     width: 84,
     height: 84,
-    borderRadius: 8,
-    backgroundColor: '#eef1f6',
+    borderRadius: 14,
+    backgroundColor: colors.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imageAddButtonText: { fontSize: 24, color: '#2d6cdf' },
+  imageAddButtonText: { fontSize: 24, color: colors.primary },
   imageViewerBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.9)',
@@ -774,30 +792,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imageViewerCloseButtonText: { color: '#fff', fontSize: 20, lineHeight: 22 },
-  commentCard: { backgroundColor: '#f4f4f6', borderRadius: 8, padding: 10, marginBottom: 8 },
+  imageViewerCloseButtonText: { color: colors.white, fontSize: 20, lineHeight: 22 },
+  commentCard: { backgroundColor: colors.card, borderRadius: 14, padding: 10, marginBottom: 8 },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  commentDate: { fontSize: 11, color: '#888' },
-  commentRemove: { fontSize: 11, color: '#c0392b' },
-  commentBody: { fontSize: 14, color: '#333' },
+  commentDate: { fontSize: 11, color: colors.textMuted },
+  commentRemove: { fontSize: 11, color: colors.danger },
+  commentBody: { fontSize: 14, color: colors.text },
   privacyButton: {
-    backgroundColor: '#eef1f6',
+    backgroundColor: colors.chip,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 999,
     alignSelf: 'flex-start',
   },
-  privacyButtonActive: { backgroundColor: '#fdecea' },
-  privacyButtonText: { fontSize: 14, fontWeight: '600', color: '#2d6cdf' },
-  privacyButtonTextActive: { color: '#c0392b' },
-  privacyDescription: { fontSize: 12, color: '#888', marginTop: 6, maxWidth: 480 },
-  locationText: { fontSize: 14, color: '#333' },
-  locationAttributionText: { fontSize: 10, color: '#aaa', marginTop: 2, marginBottom: 8 },
-  locationEmptyText: { fontSize: 13, color: '#888', marginBottom: 10 },
+  privacyButtonActive: { backgroundColor: colors.dangerBg },
+  privacyButtonText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  privacyButtonTextActive: { color: colors.danger },
+  privacyDescription: { fontSize: 12, color: colors.textMuted, marginTop: 6, maxWidth: 480 },
+  locationText: { fontSize: 14, color: colors.text },
+  locationAttributionText: { fontSize: 10, color: colors.textFaint, marginTop: 2, marginBottom: 8 },
+  locationEmptyText: { fontSize: 13, color: colors.textMuted, marginBottom: 10 },
   locationButtonRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  smallButton: { backgroundColor: '#eef1f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  smallButtonText: { fontSize: 13, fontWeight: '600', color: '#2d6cdf' },
-  smallButtonTextDanger: { fontSize: 13, fontWeight: '600', color: '#c0392b' },
+  smallButton: { backgroundColor: colors.chip, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
+  smallButtonText: { fontSize: 13, fontWeight: '600', color: colors.primary },
+  smallButtonTextDanger: { fontSize: 13, fontWeight: '600', color: colors.danger },
   saveAsRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
   saveAsInput: { flex: 1 },
   savedPlaceList: { gap: 8, marginBottom: 8 },
@@ -805,13 +823,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#eef1f6',
+    backgroundColor: colors.chip,
     paddingLeft: 12,
     paddingRight: 10,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 14,
   },
   savedPlaceMain: { flex: 1 },
-  savedPlaceAddressText: { fontSize: 11, color: '#888', marginTop: 2 },
-  savedPlaceDeleteText: { fontSize: 15, color: '#c0392b', fontWeight: '600' },
+  savedPlaceAddressText: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  savedPlaceDeleteText: { fontSize: 15, color: colors.danger, fontWeight: '600' },
 });

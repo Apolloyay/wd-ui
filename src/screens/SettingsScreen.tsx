@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
+import { colors } from '../theme/colors';
 
 interface Props {
   onBack: () => void;
@@ -40,21 +41,21 @@ export default function SettingsScreen({ onBack, onLock, onSignOut }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   backRow: { marginBottom: 8 },
-  backText: { fontSize: 14, color: '#2d6cdf', fontWeight: '600' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 20 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginTop: 20, marginBottom: 8 },
+  backText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text, marginBottom: 20 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 8 },
   actionButton: {
-    backgroundColor: '#eef1f6',
+    backgroundColor: colors.chip,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 999,
     alignSelf: 'flex-start',
   },
-  actionButtonText: { fontSize: 14, fontWeight: '600', color: '#2d6cdf' },
-  actionDescription: { fontSize: 12, color: '#888', marginTop: 6, maxWidth: 480 },
-  dangerButton: { backgroundColor: '#fdecea' },
-  dangerButtonText: { color: '#c0392b' },
+  actionButtonText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  actionDescription: { fontSize: 12, color: colors.textMuted, marginTop: 6, maxWidth: 480 },
+  dangerButton: { backgroundColor: colors.dangerBg },
+  dangerButtonText: { color: colors.danger },
 });

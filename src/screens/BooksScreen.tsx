@@ -5,6 +5,7 @@ import type { EncryptionKey } from '../crypto/crypto';
 import { countEntriesInBook } from '../db/entriesRepository';
 import { BookHasEntriesError, createBook, deleteBook, listBooks, updateBook } from '../db/booksRepository';
 import { usePeriodicSync, type SyncStatus } from '../sync/useSync';
+import { colors } from '../theme/colors';
 import type { DiaryBook } from '../types/book';
 
 interface Props {
@@ -185,41 +186,50 @@ function syncStatusLabel(status: SyncStatus, t: (key: string) => string): string
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  title: { fontSize: 24, fontWeight: '700' },
-  syncStatus: { fontSize: 12, color: '#888', marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  syncStatus: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   headerButtons: { flexDirection: 'row', gap: 8 },
   settingsButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eef1f6',
+    backgroundColor: colors.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingsIcon: { fontSize: 18 },
   addRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  addInput: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  addButton: { backgroundColor: '#2d6cdf', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, justifyContent: 'center' },
-  addButtonText: { color: '#fff', fontWeight: '600' },
-  error: { color: '#c0392b', fontSize: 13, marginBottom: 8 },
-  empty: { textAlign: 'center', color: '#888', marginTop: 40 },
+  addInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.white,
+    color: colors.text,
+  },
+  addButton: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, justifyContent: 'center' },
+  addButtonText: { color: colors.white, fontWeight: '700' },
+  error: { color: colors.danger, fontSize: 13, marginBottom: 8 },
+  empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
   showHiddenToggle: { alignSelf: 'flex-start', marginBottom: 12 },
-  showHiddenText: { fontSize: 12, color: '#2d6cdf', fontWeight: '600' },
+  showHiddenText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: '#f4f4f6',
+    borderRadius: 16,
+    backgroundColor: colors.card,
     marginBottom: 10,
     overflow: 'hidden',
   },
   cardHidden: { opacity: 0.6 },
   cardMain: { flex: 1, padding: 14 },
-  cardTitle: { fontSize: 16, fontWeight: '600' },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   actionButton: { paddingHorizontal: 14, paddingVertical: 14 },
-  actionButtonText: { color: '#2d6cdf', fontSize: 13 },
-  deleteButtonText: { color: '#c0392b', fontSize: 13 },
+  actionButtonText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  deleteButtonText: { color: colors.danger, fontSize: 13, fontWeight: '600' },
 });

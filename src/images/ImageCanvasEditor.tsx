@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, Polyline, Rect } from 'react-native-svg';
 import { randomId } from '../crypto/randomId';
+import { colors } from '../theme/colors';
 import type { ImageOverlay, ImageOverlayText } from '../types/entry';
 import type { ImageBlob } from '../types/image';
 
@@ -226,12 +227,12 @@ export default function ImageCanvasEditor({
                 y={cropRect.y * displayHeight}
                 width={cropRect.width * displayWidth}
                 height={cropRect.height * displayHeight}
-                fill="rgba(45,108,223,0.15)"
-                stroke="#2d6cdf"
+                fill="rgba(239,131,84,0.15)"
+                stroke={colors.primary}
                 strokeWidth={2}
               />
               {cornerPoints(cropRect).map(([key, cx, cy]) => (
-                <Circle key={key} cx={cx * displayWidth} cy={cy * displayHeight} r={9} fill="#2d6cdf" stroke="#fff" strokeWidth={2} />
+                <Circle key={key} cx={cx * displayWidth} cy={cy * displayHeight} r={9} fill={colors.primary} stroke={colors.white} strokeWidth={2} />
               ))}
             </>
           )}
@@ -262,7 +263,7 @@ export default function ImageCanvasEditor({
                   {
                     left: overlay.x * displayWidth,
                     top: overlay.y * displayHeight,
-                    borderColor: selectedTextId === overlay.id ? '#2d6cdf' : 'transparent',
+                    borderColor: selectedTextId === overlay.id ? colors.primary : 'transparent',
                   },
                 ]}
               >
@@ -383,22 +384,30 @@ function moveCorner(
 }
 
 const styles = StyleSheet.create({
-  emptyWrap: { height: 220, borderRadius: 8, backgroundColor: '#eef1f6', alignItems: 'center', justifyContent: 'center' },
-  pickButton: { backgroundColor: '#2d6cdf', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8 },
-  pickButtonText: { color: '#fff', fontWeight: '600' },
-  canvasWrap: { position: 'relative', backgroundColor: '#000', borderRadius: 8, overflow: 'hidden' },
+  emptyWrap: { height: 220, borderRadius: 14, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
+  pickButton: { backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 999 },
+  pickButtonText: { color: colors.white, fontWeight: '700' },
+  canvasWrap: { position: 'relative', backgroundColor: '#000', borderRadius: 14, overflow: 'hidden' },
   cropHandleHitbox: { position: 'absolute', width: 36, height: 36 },
   textOverlay: { position: 'absolute', padding: 4, borderWidth: 2, borderRadius: 4 },
   textEditPanel: { marginTop: 10, gap: 8 },
-  textEditInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14 },
+  textEditInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+    color: colors.text,
+  },
   colorRow: { flexDirection: 'row', gap: 8 },
-  colorSwatch: { width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: '#ccc' },
-  colorSwatchActive: { borderWidth: 2, borderColor: '#2d6cdf' },
+  colorSwatch: { width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
+  colorSwatchActive: { borderWidth: 2, borderColor: colors.primary },
   smallDangerButton: { alignSelf: 'flex-start' },
-  smallDangerButtonText: { color: '#c0392b', fontSize: 12, fontWeight: '600' },
+  smallDangerButtonText: { color: colors.danger, fontSize: 12, fontWeight: '600' },
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  toolButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#eef1f6' },
-  toolButtonActive: { backgroundColor: '#2d6cdf' },
-  toolButtonText: { fontSize: 12, color: '#444', fontWeight: '600' },
-  toolButtonTextActive: { color: '#fff' },
+  toolButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: colors.chip },
+  toolButtonActive: { backgroundColor: colors.primary },
+  toolButtonText: { fontSize: 12, color: colors.textDim, fontWeight: '600' },
+  toolButtonTextActive: { color: colors.white },
 });

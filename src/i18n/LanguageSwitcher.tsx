@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, type SupportedLanguage } from './index';
 import { saveLanguage } from './languageStore';
 
@@ -40,8 +41,8 @@ export default function LanguageSwitcher() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6 },
-  chip: { backgroundColor: '#eef1f6', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
-  chipActive: { backgroundColor: '#2d6cdf' },
-  chipText: { fontSize: 12, color: '#444' },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
+  chip: { backgroundColor: colors.chip, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  chipActive: { backgroundColor: colors.primary },
+  chipText: { fontSize: 12, color: colors.textDim },
+  chipTextActive: { color: colors.white, fontWeight: '600' },
 });

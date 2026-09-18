@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 /**
  * Web rich text editor -- a plain contentEditable div driven by
@@ -191,19 +192,19 @@ const toolbarButtonStyle: CSSProperties = {
   paddingRight: 10,
   paddingTop: 6,
   paddingBottom: 6,
-  borderRadius: 6,
+  borderRadius: 10,
   border: 'none',
-  backgroundColor: '#eef1f6',
+  backgroundColor: colors.chip,
   minWidth: 32,
   fontSize: 13,
   fontWeight: 700,
-  color: '#2d6cdf',
+  color: colors.primary,
   cursor: 'pointer',
 };
 
 const toolbarButtonActiveStyle: CSSProperties = {
-  backgroundColor: '#2d6cdf',
-  color: '#fff',
+  backgroundColor: colors.primary,
+  color: colors.white,
 };
 
 const fontSelectStyle: CSSProperties = {
@@ -211,16 +212,16 @@ const fontSelectStyle: CSSProperties = {
   paddingRight: 8,
   paddingTop: 6,
   paddingBottom: 6,
-  borderRadius: 6,
-  border: '1px solid #ddd',
-  backgroundColor: '#fff',
+  borderRadius: 10,
+  border: `1px solid ${colors.border}`,
+  backgroundColor: colors.white,
   fontSize: 13,
-  color: '#444',
+  color: colors.textDim,
   cursor: 'pointer',
 };
 
 const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
   editorWrap: { position: 'relative' },
-  placeholder: { position: 'absolute', top: 0, left: 0, fontSize: 16, color: '#999' },
+  placeholder: { position: 'absolute', top: 0, left: 0, fontSize: 16, color: colors.placeholder },
 });

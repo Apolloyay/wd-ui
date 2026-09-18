@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
+import { colors } from '../theme/colors';
 
 /**
  * Native (iOS) rich text editor -- react-native-pell-rich-editor wraps a
@@ -56,8 +57,8 @@ export default function RichTextEditor({ initialHtml, onChangeHtml, placeholder 
           actions.insertOrderedList,
         ]}
         style={styles.toolbar}
-        selectedIconTint="#2d6cdf"
-        iconTint="#444"
+        selectedIconTint={colors.primary}
+        iconTint={colors.textDim}
       />
       <View style={styles.fontRow}>
         {FONT_CHOICES.map((font) => (
@@ -79,9 +80,9 @@ export default function RichTextEditor({ initialHtml, onChangeHtml, placeholder 
 }
 
 const styles = StyleSheet.create({
-  toolbar: { backgroundColor: '#eef1f6', borderRadius: 8, marginBottom: 8 },
+  toolbar: { backgroundColor: colors.chip, borderRadius: 12, marginBottom: 8 },
   fontRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
-  fontButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: '#eef1f6' },
-  fontButtonText: { fontSize: 12, color: '#444' },
-  editor: { minHeight: 260, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 8 },
+  fontButton: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: colors.chip },
+  fontButtonText: { fontSize: 12, color: colors.textDim },
+  editor: { minHeight: 260, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 8 },
 });

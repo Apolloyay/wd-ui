@@ -15,6 +15,7 @@ import MemoriesScreen from './src/screens/MemoriesScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import UnlockScreen from './src/screens/UnlockScreen';
+import { colors } from './src/theme/colors';
 import type { DiaryBook } from './src/types/book';
 import type { DiaryEntry } from './src/types/entry';
 
@@ -154,6 +155,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

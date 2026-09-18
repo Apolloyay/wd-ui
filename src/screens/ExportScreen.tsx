@@ -8,6 +8,7 @@ import { getImageBlob } from '../db/imageBlobRepository';
 import { exportEntriesToPdf } from '../export/exportPdf';
 import { slugifyForFilename } from '../export/pdfTemplate';
 import { usePeriodicSync } from '../sync/useSync';
+import { colors } from '../theme/colors';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 import type { ImageBlob } from '../types/image';
@@ -161,7 +162,7 @@ export default function ExportScreen({ encryptionKey, onBack }: Props) {
 
         <Pressable style={styles.exportButton} onPress={handleExport} disabled={exporting}>
           {exporting ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <Text style={styles.exportButtonText}>{t('export.exportButton')}</Text>
           )}
@@ -172,30 +173,40 @@ export default function ExportScreen({ encryptionKey, onBack }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   backRow: { marginBottom: 8 },
-  backText: { fontSize: 14, color: '#2d6cdf', fontWeight: '600' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  filterLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 8, marginTop: 12 },
+  backText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text, marginBottom: 16 },
+  filterLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, marginTop: 12 },
   filterList: { marginBottom: 4, flexGrow: 0 },
-  chip: { backgroundColor: '#eef1f6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, marginRight: 8 },
-  chipActive: { backgroundColor: '#2d6cdf' },
-  chipText: { fontSize: 12, color: '#444' },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
+  chip: { backgroundColor: colors.chip, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, marginRight: 8 },
+  chipActive: { backgroundColor: colors.primary },
+  chipText: { fontSize: 12, color: colors.textDim },
+  chipTextActive: { color: colors.white, fontWeight: '600' },
   dateRow: { flexDirection: 'row', gap: 8 },
-  dateInput: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13 },
+  dateInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    backgroundColor: colors.white,
+    color: colors.text,
+  },
   showHiddenToggle: { alignSelf: 'flex-start', marginTop: 16 },
-  showHiddenText: { fontSize: 12, color: '#2d6cdf', fontWeight: '600' },
-  resultCount: { fontSize: 13, color: '#666', marginTop: 20, marginBottom: 12 },
-  error: { color: '#c0392b', fontSize: 13, marginBottom: 12 },
+  showHiddenText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
+  resultCount: { fontSize: 13, color: colors.textSecondary, marginTop: 20, marginBottom: 12 },
+  error: { color: colors.danger, fontSize: 13, marginBottom: 12 },
   exportButton: {
-    backgroundColor: '#2d6cdf',
+    backgroundColor: colors.primary,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: 24,
   },
-  exportButtonText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  exportButtonText: { color: colors.white, fontWeight: '700', fontSize: 14 },
 });

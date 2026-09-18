@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
 import { login, register } from '../api/client';
 import { saveAccessToken } from '../auth/session';
 import { createCanary, deriveKeyFromPassphrase, type EncryptionKey } from '../crypto/crypto';
 import { saveCanary, saveSalt } from '../crypto/keyStore';
+import Button from '../theme/Button';
+import { colors } from '../theme/colors';
 
 interface Props {
   onAuthenticated: (key: EncryptionKey) => void;
@@ -79,7 +81,7 @@ export default function AuthScreen({ onAuthenticated }: Props) {
 
       <View style={styles.buttonSlot}>
         {busy ? (
-          <ActivityIndicator />
+          <ActivityIndicator color={colors.primary} />
         ) : (
           <Button title={mode === 'login' ? t('auth.logIn') : t('auth.createAccount')} onPress={handleSubmit} />
         )}
@@ -99,16 +101,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
     gap: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
   },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16 },
+  title: { fontSize: 30, fontWeight: '800', textAlign: 'center', color: colors.text },
+  subtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: colors.white,
+    color: colors.text,
+  },
   errorSlot: { minHeight: 20, justifyContent: 'center' },
-  error: { color: '#c0392b', textAlign: 'center' },
+  error: { color: colors.danger, textAlign: 'center' },
   buttonSlot: { minHeight: 44, justifyContent: 'center' },
-  link: { color: '#2d6cdf', textAlign: 'center', marginTop: 16 },
+  link: { color: colors.primary, fontWeight: '600', textAlign: 'center', marginTop: 16 },
 });

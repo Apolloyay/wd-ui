@@ -5,6 +5,7 @@ import type { EncryptionKey } from '../crypto/crypto';
 import { listEntries } from '../db/entriesRepository';
 import { bodyToPlainText } from '../richtext/bodyText';
 import { usePeriodicSync, type SyncStatus } from '../sync/useSync';
+import { colors } from '../theme/colors';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 
@@ -156,50 +157,50 @@ function syncStatusLabel(status: SyncStatus, t: (key: string) => string): string
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   // On wide/ultrawide desktop windows, a full-bleed edge-to-edge layout reads
   // poorly — cap the content width and center it like a normal web page.
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
   backRow: { marginBottom: 8 },
-  backText: { fontSize: 14, color: '#2d6cdf', fontWeight: '600' },
+  backText: { fontSize: 14, color: colors.primary, fontWeight: '600' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  title: { fontSize: 24, fontWeight: '700' },
-  syncStatus: { fontSize: 12, color: '#888', marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  syncStatus: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   newButtonRow: { flexDirection: 'row', gap: 8 },
-  newButton: { backgroundColor: '#2d6cdf', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  newButtonSecondary: { backgroundColor: '#5a8f7b' },
-  newButtonText: { color: '#fff', fontWeight: '600' },
+  newButton: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  newButtonSecondary: { backgroundColor: colors.secondary },
+  newButtonText: { color: colors.white, fontWeight: '700' },
   tagFilterList: { marginBottom: 12, flexGrow: 0 },
   tagChip: {
-    backgroundColor: '#eef1f6',
+    backgroundColor: colors.chip,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
     marginRight: 8,
   },
-  tagChipActive: { backgroundColor: '#2d6cdf' },
-  tagChipText: { fontSize: 12, color: '#444' },
-  tagChipTextActive: { color: '#fff', fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#888', marginTop: 40 },
+  tagChipActive: { backgroundColor: colors.primary },
+  tagChipText: { fontSize: 12, color: colors.textDim },
+  tagChipTextActive: { color: colors.white, fontWeight: '600' },
+  empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
   showHiddenToggle: { alignSelf: 'flex-start', marginBottom: 12 },
-  showHiddenText: { fontSize: 12, color: '#2d6cdf', fontWeight: '600' },
-  card: { padding: 14, borderRadius: 10, backgroundColor: '#f4f4f6', marginBottom: 10 },
+  showHiddenText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
+  card: { padding: 14, borderRadius: 16, backgroundColor: colors.card, marginBottom: 10 },
   cardHidden: { opacity: 0.6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 16, fontWeight: '600' },
-  photoBadge: { fontSize: 11, color: '#666' },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  photoBadge: { fontSize: 11, color: colors.textSecondary },
   hiddenBadge: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#c0392b',
-    backgroundColor: '#fdecea',
+    color: colors.danger,
+    backgroundColor: colors.dangerBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
   },
-  cardDate: { fontSize: 12, color: '#888', marginBottom: 4 },
-  cardBody: { fontSize: 14, color: '#333' },
+  cardDate: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+  cardBody: { fontSize: 14, color: colors.text },
   cardTags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
-  cardTag: { backgroundColor: '#e3e8f0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  cardTagText: { fontSize: 11, color: '#444' },
+  cardTag: { backgroundColor: colors.chipTag, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  cardTagText: { fontSize: 11, color: colors.textDim },
 });
