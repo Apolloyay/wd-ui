@@ -74,6 +74,11 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  // Location and privacy/export actions live behind small header icons (like
+  // BooksScreen's icon row) instead of full inline sections -- these track
+  // whether their popup menu is open.
+  const [locationMenuOpen, setLocationMenuOpen] = useState(false);
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
 
   // Mutable fields so the debounce timer and the save chain always act on
   // the latest keystrokes, not a stale value captured when they were set up.
@@ -467,6 +472,117 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
     onDone();
   };
 
+  const headerIcons = (
+    <View style={styles.headerIconRow}>
+      <View style={styles.headerIconWrap}>
+        <Pressable
+          style={styles.headerIconButton}
+          onPress={() => {
+            setLocationMenuOpen((v) => !v);
+            setSettingsMenuOpen(false);
+          }}
+          accessibilityLabel={t('entry.locationLabel')}
+        >
+          <Text style={styles.headerIconText}>📍</Text>
+        </Pressable>
+        {locationMenuOpen && (
+          <View style={styles.dropdownMenu}>
+            {locationError && <Text style={styles.imageError}>{locationError}</Text>}
+            <Pressable style={styles.dropdownItem} onPress={handleUseCurrentLocation} disabled={locationBusy}>
+              {locationBusy ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={styles.dropdownItemText}>{t('entry.locationUseCurrent')}</Text>
+              )}
+            </Pressable>
+            {location && (
+              <Pressable
+                style={styles.dropdownItem}
+                onPress={() => setSavingPlaceLabel(savingPlaceLabel === null ? '' : null)}
+              >
+                <Text style={styles.dropdownItemText}>{t('entry.locationSaveAs')}</Text>
+              </Pressable>
+            )}
+            {savingPlaceLabel !== null && (
+              <View style={styles.saveAsRow}>
+                <TextInput
+                  style={[styles.tagInput, styles.saveAsInput]}
+                  placeholder={t('entry.locationSaveAsPlaceholder')}
+                  value={savingPlaceLabel}
+                  onChangeText={setSavingPlaceLabel}
+                  onSubmitEditing={handleSaveCurrentAsPlace}
+                  autoFocus
+                />
+                <Pressable style={styles.smallButton} onPress={handleSaveCurrentAsPlace}>
+                  <Text style={styles.smallButtonText}>{t('entry.locationSaveAsConfirm')}</Text>
+                </Pressable>
+              </View>
+            )}
+            {location && (
+              <Pressable style={styles.dropdownItem} onPress={handleRemoveLocation}>
+                <Text style={[styles.dropdownItemText, styles.dropdownItemTextDanger]}>
+                  {t('entry.locationRemove')}
+                </Text>
+              </Pressable>
+            )}
+            {savedPlaces.length > 0 && (
+              <View style={styles.savedPlaceList}>
+                {savedPlaces.map((place) => (
+                  <View key={place.id} style={styles.savedPlaceChipWrap}>
+                    <Pressable style={styles.savedPlaceMain} onPress={() => handleChooseSavedPlace(place)}>
+                      <Text style={styles.tagChipText}>{place.label}</Text>
+                      {!!place.address && (
+                        <Text style={styles.savedPlaceAddressText} numberOfLines={1}>
+                          {place.address}
+                        </Text>
+                      )}
+                    </Pressable>
+                    <Pressable onPress={() => handleDeleteSavedPlace(place.id)}>
+                      <Text style={styles.savedPlaceDeleteText}>×</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+      <Pressable
+        style={styles.headerIconButton}
+        onPress={handleExportPdf}
+        disabled={exporting}
+        accessibilityLabel={t('entry.exportLabel')}
+      >
+        {exporting ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Text style={styles.headerIconText}>📤</Text>
+        )}
+      </Pressable>
+      <View style={styles.headerIconWrap}>
+        <Pressable
+          style={styles.headerIconButton}
+          onPress={() => {
+            setSettingsMenuOpen((v) => !v);
+            setLocationMenuOpen(false);
+          }}
+          accessibilityLabel={t('entry.privacyLabel')}
+        >
+          <Text style={styles.headerIconText}>⚙</Text>
+        </Pressable>
+        {settingsMenuOpen && (
+          <View style={styles.dropdownMenu}>
+            <Pressable style={styles.dropdownItem} onPress={handleToggleHidden}>
+              <Text style={[styles.dropdownItemText, hidden && styles.dropdownItemTextDanger]}>
+                {t(hidden ? 'entry.unhideEntry' : 'entry.hideEntry')}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
   if (loading) return null;
 
   return (
@@ -476,7 +592,7 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
           title={entryId ? t('entry.editEntryTitle') : t('entry.newEntryTitle')}
           onBack={handleDone}
           backLabel={t('entry.done')}
-          right={<Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>}
+          right={headerIcons}
         />
       )}
       <ScrollView contentContainerStyle={styles.container}>
@@ -485,9 +601,65 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
           <View style={styles.header}>
             <Button title={t('entry.done')} onPress={handleDone} />
             <Text style={styles.headerTitle}>{entryId ? t('entry.editEntryTitle') : t('entry.newEntryTitle')}</Text>
-            <Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>
+            <View style={styles.headerRight}>
+              {headerIcons}
+              <Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>
+            </View>
           </View>
         )}
+        {isPhoneWidth && <Text style={styles.saveStatusPhone}>{saveStatusLabel(saveStatus, t)}</Text>}
+        {exportError && <Text style={styles.imageError}>{exportError}</Text>}
+
+        {entryType === 'text' && (
+          <>
+            {location ? (
+              <Text style={styles.locationText}>
+                📍 {location.placeName}
+                {weather ? `   ${weatherCodeToIcon(weather.weatherCode)} ${Math.round(weather.temperatureC)}°C` : ''}
+              </Text>
+            ) : (
+              <Text style={styles.locationEmptyText}>{t('entry.locationEmpty')}</Text>
+            )}
+
+            {imageError && <Text style={styles.imageError}>{imageError}</Text>}
+            <View style={styles.imageRow}>
+              {images.map((img) => {
+                const blob = imageBlobs[img.id];
+                return (
+                  <View key={img.id} style={styles.imageThumbWrap}>
+                    {blob ? (
+                      <Pressable onPress={() => setViewingImage(blob)}>
+                        <Image
+                          source={{ uri: `data:${blob.mimeType};base64,${blob.dataBase64}` }}
+                          style={styles.imageThumb}
+                        />
+                      </Pressable>
+                    ) : blob === null ? (
+                      <View style={[styles.imageThumb, styles.imageUnavailable]}>
+                        <Text style={styles.imageUnavailableText}>{t('entry.imageUnavailable')}</Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.imageThumb, styles.imageUnavailable]}>
+                        <ActivityIndicator size="small" />
+                      </View>
+                    )}
+                    <Pressable style={styles.imageRemoveButton} onPress={() => handleRemoveImage(img.id)}>
+                      <Text style={styles.imageRemoveButtonText}>×</Text>
+                    </Pressable>
+                  </View>
+                );
+              })}
+              <Pressable
+                style={styles.imageAddButton}
+                onPress={handleAddImage}
+                accessibilityLabel={t('entry.imageAdd')}
+              >
+                <Text style={styles.imageAddButtonText}>+</Text>
+              </Pressable>
+            </View>
+          </>
+        )}
+
         <TextInput
           style={styles.titleInput}
           placeholder={t('entry.titlePlaceholder')}
@@ -540,48 +712,6 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
           onBlur={handleAddTag}
         />
 
-        {entryType === 'text' && (
-        <>
-        <Text style={styles.tagsLabel}>{t('entry.imagesLabel')}</Text>
-        {imageError && <Text style={styles.imageError}>{imageError}</Text>}
-        <View style={styles.imageRow}>
-          {images.map((img) => {
-            const blob = imageBlobs[img.id];
-            return (
-              <View key={img.id} style={styles.imageThumbWrap}>
-                {blob ? (
-                  <Pressable onPress={() => setViewingImage(blob)}>
-                    <Image
-                      source={{ uri: `data:${blob.mimeType};base64,${blob.dataBase64}` }}
-                      style={styles.imageThumb}
-                    />
-                  </Pressable>
-                ) : blob === null ? (
-                  <View style={[styles.imageThumb, styles.imageUnavailable]}>
-                    <Text style={styles.imageUnavailableText}>{t('entry.imageUnavailable')}</Text>
-                  </View>
-                ) : (
-                  <View style={[styles.imageThumb, styles.imageUnavailable]}>
-                    <ActivityIndicator size="small" />
-                  </View>
-                )}
-                <Pressable style={styles.imageRemoveButton} onPress={() => handleRemoveImage(img.id)}>
-                  <Text style={styles.imageRemoveButtonText}>×</Text>
-                </Pressable>
-              </View>
-            );
-          })}
-          <Pressable
-            style={styles.imageAddButton}
-            onPress={handleAddImage}
-            accessibilityLabel={t('entry.imageAdd')}
-          >
-            <Text style={styles.imageAddButtonText}>+</Text>
-          </Pressable>
-        </View>
-        </>
-        )}
-
         <Modal
           visible={!!viewingImage}
           transparent
@@ -624,95 +754,15 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
           multiline
         />
 
-        <Text style={styles.tagsLabel}>{t('entry.locationLabel')}</Text>
-        {locationError && <Text style={styles.imageError}>{locationError}</Text>}
-        {location ? (
-          <>
+        {entryType === 'image' &&
+          (location ? (
             <Text style={styles.locationText}>
               📍 {location.placeName}
               {weather ? `   ${weatherCodeToIcon(weather.weatherCode)} ${Math.round(weather.temperatureC)}°C` : ''}
             </Text>
-            <Text style={styles.locationAttributionText}>{t('entry.locationAttribution')}</Text>
-          </>
-        ) : (
-          <Text style={styles.locationEmptyText}>{t('entry.locationEmpty')}</Text>
-        )}
-        <View style={styles.locationButtonRow}>
-          <Pressable style={styles.smallButton} onPress={handleUseCurrentLocation} disabled={locationBusy}>
-            {locationBusy ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Text style={styles.smallButtonText}>{t('entry.locationUseCurrent')}</Text>
-            )}
-          </Pressable>
-          {location && (
-            <Pressable
-              style={styles.smallButton}
-              onPress={() => setSavingPlaceLabel(savingPlaceLabel === null ? '' : null)}
-            >
-              <Text style={styles.smallButtonText}>{t('entry.locationSaveAs')}</Text>
-            </Pressable>
-          )}
-          {location && (
-            <Pressable style={styles.smallButton} onPress={handleRemoveLocation}>
-              <Text style={styles.smallButtonTextDanger}>{t('entry.locationRemove')}</Text>
-            </Pressable>
-          )}
-        </View>
-
-        {savingPlaceLabel !== null && (
-          <View style={styles.saveAsRow}>
-            <TextInput
-              style={[styles.tagInput, styles.saveAsInput]}
-              placeholder={t('entry.locationSaveAsPlaceholder')}
-              value={savingPlaceLabel}
-              onChangeText={setSavingPlaceLabel}
-              onSubmitEditing={handleSaveCurrentAsPlace}
-              autoFocus
-            />
-            <Pressable style={styles.smallButton} onPress={handleSaveCurrentAsPlace}>
-              <Text style={styles.smallButtonText}>{t('entry.locationSaveAsConfirm')}</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {savedPlaces.length > 0 && (
-          <View style={styles.savedPlaceList}>
-            {savedPlaces.map((place) => (
-              <View key={place.id} style={styles.savedPlaceChipWrap}>
-                <Pressable style={styles.savedPlaceMain} onPress={() => handleChooseSavedPlace(place)}>
-                  <Text style={styles.tagChipText}>{place.label}</Text>
-                  {!!place.address && (
-                    <Text style={styles.savedPlaceAddressText} numberOfLines={1}>
-                      {place.address}
-                    </Text>
-                  )}
-                </Pressable>
-                <Pressable onPress={() => handleDeleteSavedPlace(place.id)}>
-                  <Text style={styles.savedPlaceDeleteText}>×</Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <Text style={styles.tagsLabel}>{t('entry.privacyLabel')}</Text>
-        <Pressable style={[styles.privacyButton, hidden && styles.privacyButtonActive]} onPress={handleToggleHidden}>
-          <Text style={[styles.privacyButtonText, hidden && styles.privacyButtonTextActive]}>
-            {t(hidden ? 'entry.unhideEntry' : 'entry.hideEntry')}
-          </Text>
-        </Pressable>
-        <Text style={styles.privacyDescription}>{t('entry.hideEntryDescription')}</Text>
-
-        <Text style={styles.tagsLabel}>{t('entry.exportLabel')}</Text>
-        {exportError && <Text style={styles.imageError}>{exportError}</Text>}
-        <Pressable style={styles.privacyButton} onPress={handleExportPdf} disabled={exporting}>
-          {exporting ? (
-            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={styles.privacyButtonText}>{t('entry.exportButton')}</Text>
-          )}
-        </Pressable>
+            <Text style={styles.locationEmptyText}>{t('entry.locationEmpty')}</Text>
+          ))}
       </View>
       </ScrollView>
     </View>
@@ -736,9 +786,55 @@ const styles = StyleSheet.create({
   // Matches HomeScreen's content cap so wide/ultrawide windows don't stretch
   // a single text column edge-to-edge.
   content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  // zIndex (needs an explicit position to take effect on web) keeps the
+  // header -- and the location/settings dropdowns anchored to its icons --
+  // painting above the content that follows it in the DOM, which otherwise
+  // stacks on top of a non-positioned earlier sibling regardless of the
+  // dropdown's own zIndex.
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    position: 'relative',
+    zIndex: 20,
+  },
   headerTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   saveStatus: { fontSize: 12, color: colors.textMuted, minWidth: 60, textAlign: 'right' },
+  saveStatusPhone: { fontSize: 12, color: colors.textMuted, textAlign: 'right', marginBottom: 8 },
+  headerIconRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerIconWrap: { position: 'relative' },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.chip,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconText: { fontSize: 18 },
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    marginTop: 6,
+    right: 0,
+    minWidth: 220,
+    maxWidth: 280,
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 10,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+    zIndex: 20,
+  },
+  dropdownItem: { paddingVertical: 8, paddingHorizontal: 8, borderRadius: 10 },
+  dropdownItemText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  dropdownItemTextDanger: { color: colors.danger },
   titleInput: {
     fontSize: 20,
     fontWeight: '700',
@@ -814,24 +910,10 @@ const styles = StyleSheet.create({
   commentDate: { fontSize: 11, color: colors.textMuted },
   commentRemove: { fontSize: 11, color: colors.danger },
   commentBody: { fontSize: 14, color: colors.text },
-  privacyButton: {
-    backgroundColor: colors.chip,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    alignSelf: 'flex-start',
-  },
-  privacyButtonActive: { backgroundColor: colors.dangerBg },
-  privacyButtonText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  privacyButtonTextActive: { color: colors.danger },
-  privacyDescription: { fontSize: 12, color: colors.textMuted, marginTop: 6, maxWidth: 480 },
-  locationText: { fontSize: 14, color: colors.text },
-  locationAttributionText: { fontSize: 10, color: colors.textFaint, marginTop: 2, marginBottom: 8 },
-  locationEmptyText: { fontSize: 13, color: colors.textMuted, marginBottom: 10 },
-  locationButtonRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  locationText: { fontSize: 14, color: colors.text, marginBottom: 12 },
+  locationEmptyText: { fontSize: 13, color: colors.textMuted, marginBottom: 12 },
   smallButton: { backgroundColor: colors.chip, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
   smallButtonText: { fontSize: 13, fontWeight: '600', color: colors.primary },
-  smallButtonTextDanger: { fontSize: 13, fontWeight: '600', color: colors.danger },
   saveAsRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
   saveAsInput: { flex: 1 },
   savedPlaceList: { gap: 8, marginBottom: 8 },

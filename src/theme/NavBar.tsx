@@ -48,6 +48,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
     backgroundColor: colors.background,
+    // zIndex (needs an explicit position to take effect on web) keeps the
+    // bar -- and any dropdown anchored to a `right` icon -- painting above
+    // the screen content that follows it as a later, non-positioned sibling.
+    position: 'relative',
+    zIndex: 20,
   },
   title: { fontSize: 17, fontWeight: '600', color: colors.text, textAlign: 'center', marginHorizontal: 84 },
   leftOverlay: {

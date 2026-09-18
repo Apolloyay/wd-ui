@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { EncryptionKey } from '../crypto/crypto';
 import { countEntriesInBook } from '../db/entriesRepository';
 import { BookHasEntriesError, createBook, deleteBook, listBooks, updateBook } from '../db/booksRepository';
@@ -31,6 +31,7 @@ export default function BooksScreen({
   const [bookList, setBookList] = useState<DiaryBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [newBookName, setNewBookName] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showHidden, setShowHidden] = useState(false);
 
@@ -61,7 +62,13 @@ export default function BooksScreen({
     if (!name) return;
     await createBook({ name }, encryptionKey);
     setNewBookName('');
+    setCreateModalOpen(false);
     await refresh();
+  };
+
+  const handleCancelAddBook = () => {
+    setNewBookName('');
+    setCreateModalOpen(false);
   };
 
   const handleDeleteBook = async (book: DiaryBook) => {
@@ -130,19 +137,6 @@ export default function BooksScreen({
           )}
         </View>
 
-        <View style={styles.addRow}>
-          <TextInput
-            style={styles.addInput}
-            placeholder={t('books.newBookPlaceholder')}
-            value={newBookName}
-            onChangeText={setNewBookName}
-            onSubmitEditing={handleAddBook}
-          />
-          <Pressable style={styles.addButton} onPress={handleAddBook}>
-            <Text style={styles.addButtonText}>{t('books.add')}</Text>
-          </Pressable>
-        </View>
-
         {deleteError && <Text style={styles.error}>{deleteError}</Text>}
 
         <Pressable onPress={() => setShowHidden((v) => !v)} style={styles.showHiddenToggle}>
@@ -171,6 +165,34 @@ export default function BooksScreen({
           )}
         />
       </View>
+
+      <Pressable style={styles.fab} onPress={() => setCreateModalOpen(true)} accessibilityLabel={t('books.add')}>
+        <Text style={styles.fabIcon}>+</Text>
+      </Pressable>
+
+      <Modal visible={createModalOpen} transparent animationType="fade" onRequestClose={handleCancelAddBook}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t('books.add')}</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder={t('books.newBookPlaceholder')}
+              value={newBookName}
+              onChangeText={setNewBookName}
+              onSubmitEditing={handleAddBook}
+              autoFocus
+            />
+            <View style={styles.modalButtonRow}>
+              <Pressable style={styles.modalCancelButton} onPress={handleCancelAddBook}>
+                <Text style={styles.modalCancelButtonText}>{t('books.cancel')}</Text>
+              </Pressable>
+              <Pressable style={styles.modalCreateButton} onPress={handleAddBook}>
+                <Text style={styles.modalCreateButtonText}>{t('books.create')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -208,19 +230,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   settingsIcon: { fontSize: 18 },
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  addInput: {
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  fabIcon: { fontSize: 28, color: colors.white, fontWeight: '700', lineHeight: 30 },
+  modalBackdrop: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    padding: 20,
+    gap: 12,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  modalInput: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: colors.white,
     color: colors.text,
+    fontSize: 15,
   },
-  addButton: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, justifyContent: 'center' },
-  addButtonText: { color: colors.white, fontWeight: '700' },
+  modalButtonRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 4 },
+  modalCancelButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
+  modalCancelButtonText: { color: colors.textSecondary, fontWeight: '600', fontSize: 14 },
+  modalCreateButton: { backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 999 },
+  modalCreateButtonText: { color: colors.white, fontWeight: '700', fontSize: 14 },
   error: { color: colors.danger, fontSize: 13, marginBottom: 8 },
   empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
   showHiddenToggle: { alignSelf: 'flex-start', marginBottom: 12 },
