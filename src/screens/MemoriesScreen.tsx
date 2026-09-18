@@ -8,13 +8,17 @@ import { getImageBlob } from '../db/imageBlobRepository';
 import { bodyToPlainText } from '../richtext/bodyText';
 import { usePeriodicSync } from '../sync/useSync';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 import type { ImageBlob } from '../types/image';
 
 interface Props {
   encryptionKey: EncryptionKey;
-  onBack: () => void;
+  // Undefined at phone width when this screen is a bottom-tab-bar peer of
+  // Books rather than pushed from it -- see App.tsx's showBackOnRootTabs.
+  onBack?: () => void;
   onOpenEntry: (book: DiaryBook, entryId: string) => void;
 }
 
@@ -25,6 +29,7 @@ interface MemoryGroup {
 
 export default function MemoriesScreen({ encryptionKey, onBack, onOpenEntry }: Props) {
   const { t, i18n } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [books, setBooks] = useState<DiaryBook[]>([]);
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [showHidden, setShowHidden] = useState(false);
@@ -87,12 +92,18 @@ export default function MemoriesScreen({ encryptionKey, onBack, onOpenEntry }: P
 
   return (
     <View style={styles.container}>
+      {isPhoneWidth && <NavBar title={t('memories.title')} onBack={onBack} backLabel={t('memories.back')} />}
       <View style={styles.content}>
-        <Pressable onPress={onBack} style={styles.backRow}>
-          <Text style={styles.backText}>{t('memories.back')}</Text>
-        </Pressable>
-
-        <Text style={styles.title}>{t('memories.title')}</Text>
+        {!isPhoneWidth && (
+          <>
+            {onBack && (
+              <Pressable onPress={onBack} style={styles.backRow}>
+                <Text style={styles.backText}>{t('memories.back')}</Text>
+              </Pressable>
+            )}
+            <Text style={styles.title}>{t('memories.title')}</Text>
+          </>
+        )}
         <Text style={styles.subtitle}>{t('memories.subtitle')}</Text>
 
         <Pressable onPress={() => setShowHidden((v) => !v)} style={styles.showHiddenToggle}>

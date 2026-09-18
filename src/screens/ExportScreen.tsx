@@ -9,19 +9,24 @@ import { exportEntriesToPdf } from '../export/exportPdf';
 import { slugifyForFilename } from '../export/pdfTemplate';
 import { usePeriodicSync } from '../sync/useSync';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 import type { ImageBlob } from '../types/image';
 
 interface Props {
   encryptionKey: EncryptionKey;
-  onBack: () => void;
+  // Undefined at phone width when this screen is a bottom-tab-bar peer of
+  // Books rather than pushed from it -- see App.tsx's showBackOnRootTabs.
+  onBack?: () => void;
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function ExportScreen({ encryptionKey, onBack }: Props) {
   const { t, i18n } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [books, setBooks] = useState<DiaryBook[]>([]);
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -98,12 +103,18 @@ export default function ExportScreen({ encryptionKey, onBack }: Props) {
 
   return (
     <View style={styles.container}>
+      {isPhoneWidth && <NavBar title={t('export.title')} onBack={onBack} backLabel={t('export.back')} />}
       <View style={styles.content}>
-        <Pressable onPress={onBack} style={styles.backRow}>
-          <Text style={styles.backText}>{t('export.back')}</Text>
-        </Pressable>
-
-        <Text style={styles.title}>{t('export.title')}</Text>
+        {!isPhoneWidth && (
+          <>
+            {onBack && (
+              <Pressable onPress={onBack} style={styles.backRow}>
+                <Text style={styles.backText}>{t('export.back')}</Text>
+              </Pressable>
+            )}
+            <Text style={styles.title}>{t('export.title')}</Text>
+          </>
+        )}
 
         <Text style={styles.filterLabel}>{t('export.scopeLabel')}</Text>
         <FlatList

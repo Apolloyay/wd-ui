@@ -7,17 +7,22 @@ import { listEntries } from '../db/entriesRepository';
 import { bodyToPlainText } from '../richtext/bodyText';
 import { usePeriodicSync } from '../sync/useSync';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 
 interface Props {
   encryptionKey: EncryptionKey;
-  onBack: () => void;
+  // Undefined at phone width when this screen is a bottom-tab-bar peer of
+  // Books rather than pushed from it -- see App.tsx's showBackOnRootTabs.
+  onBack?: () => void;
   onOpenEntry: (book: DiaryBook, entryId: string) => void;
 }
 
 export default function SearchScreen({ encryptionKey, onBack, onOpenEntry }: Props) {
   const { t, i18n } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [books, setBooks] = useState<DiaryBook[]>([]);
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [keyword, setKeyword] = useState('');
@@ -76,12 +81,18 @@ export default function SearchScreen({ encryptionKey, onBack, onOpenEntry }: Pro
 
   return (
     <View style={styles.container}>
+      {isPhoneWidth && <NavBar title={t('search.title')} onBack={onBack} backLabel={t('search.back')} />}
       <View style={styles.content}>
-        <Pressable onPress={onBack} style={styles.backRow}>
-          <Text style={styles.backText}>{t('search.back')}</Text>
-        </Pressable>
-
-        <Text style={styles.title}>{t('search.title')}</Text>
+        {!isPhoneWidth && (
+          <>
+            {onBack && (
+              <Pressable onPress={onBack} style={styles.backRow}>
+                <Text style={styles.backText}>{t('search.back')}</Text>
+              </Pressable>
+            )}
+            <Text style={styles.title}>{t('search.title')}</Text>
+          </>
+        )}
 
         <TextInput
           style={styles.input}

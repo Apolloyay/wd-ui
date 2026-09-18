@@ -34,6 +34,7 @@
   },
   "books": {
     "title": "我的日记本",
+    "tabLabel": "日记本",
     "newBookPlaceholder": "新日记本名称",
     "add": "添加",
     "delete": "删除",

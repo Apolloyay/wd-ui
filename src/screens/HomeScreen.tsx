@@ -6,6 +6,8 @@ import { listEntries } from '../db/entriesRepository';
 import { bodyToPlainText } from '../richtext/bodyText';
 import { usePeriodicSync, type SyncStatus } from '../sync/useSync';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 
@@ -20,6 +22,7 @@ interface Props {
 
 export default function HomeScreen({ encryptionKey, book, onBack, onNewEntry, onOpenEntry, refreshToken }: Props) {
   const { t, i18n } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -59,16 +62,23 @@ export default function HomeScreen({ encryptionKey, book, onBack, onNewEntry, on
 
   return (
     <View style={styles.container}>
+      {isPhoneWidth && <NavBar title={book.name} onBack={onBack} backLabel={t('entries.back')} />}
       <View style={styles.content}>
-        <Pressable onPress={onBack} style={styles.backRow}>
-          <Text style={styles.backText}>{t('entries.back')}</Text>
-        </Pressable>
+        {!isPhoneWidth && (
+          <Pressable onPress={onBack} style={styles.backRow}>
+            <Text style={styles.backText}>{t('entries.back')}</Text>
+          </Pressable>
+        )}
 
         <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>{book.name}</Text>
+          {isPhoneWidth ? (
             <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus, t)}</Text>
-          </View>
+          ) : (
+            <View>
+              <Text style={styles.title}>{book.name}</Text>
+              <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus, t)}</Text>
+            </View>
+          )}
           <View style={styles.newButtonRow}>
             <Pressable style={styles.newButton} onPress={() => onNewEntry('text')}>
               <Text style={styles.newButtonText}>{t('entries.newButton')}</Text>

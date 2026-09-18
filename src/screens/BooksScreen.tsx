@@ -6,6 +6,7 @@ import { countEntriesInBook } from '../db/entriesRepository';
 import { BookHasEntriesError, createBook, deleteBook, listBooks, updateBook } from '../db/booksRepository';
 import { usePeriodicSync, type SyncStatus } from '../sync/useSync';
 import { colors } from '../theme/colors';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryBook } from '../types/book';
 
 interface Props {
@@ -26,6 +27,7 @@ export default function BooksScreen({
   onOpenExport,
 }: Props) {
   const { t } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [bookList, setBookList] = useState<DiaryBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [newBookName, setNewBookName] = useState('');
@@ -91,36 +93,41 @@ export default function BooksScreen({
             <Text style={styles.title}>{t('books.title')}</Text>
             <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus, t)}</Text>
           </View>
-          <View style={styles.headerButtons}>
-            <Pressable
-              style={styles.settingsButton}
-              onPress={onOpenSearch}
-              accessibilityLabel={t('search.openButtonLabel')}
-            >
-              <Text style={styles.settingsIcon}>🔍</Text>
-            </Pressable>
-            <Pressable
-              style={styles.settingsButton}
-              onPress={onOpenMemories}
-              accessibilityLabel={t('memories.openButtonLabel')}
-            >
-              <Text style={styles.settingsIcon}>📅</Text>
-            </Pressable>
-            <Pressable
-              style={styles.settingsButton}
-              onPress={onOpenExport}
-              accessibilityLabel={t('export.openButtonLabel')}
-            >
-              <Text style={styles.settingsIcon}>📤</Text>
-            </Pressable>
-            <Pressable
-              style={styles.settingsButton}
-              onPress={onOpenSettings}
-              accessibilityLabel={t('settings.openButtonLabel')}
-            >
-              <Text style={styles.settingsIcon}>⚙</Text>
-            </Pressable>
-          </View>
+          {/* At phone width these same destinations live in the bottom tab
+              bar (see App.tsx) instead, matching an iOS tab-bar app rather
+              than showing the same nav twice. */}
+          {!isPhoneWidth && (
+            <View style={styles.headerButtons}>
+              <Pressable
+                style={styles.settingsButton}
+                onPress={onOpenSearch}
+                accessibilityLabel={t('search.openButtonLabel')}
+              >
+                <Text style={styles.settingsIcon}>🔍</Text>
+              </Pressable>
+              <Pressable
+                style={styles.settingsButton}
+                onPress={onOpenMemories}
+                accessibilityLabel={t('memories.openButtonLabel')}
+              >
+                <Text style={styles.settingsIcon}>📅</Text>
+              </Pressable>
+              <Pressable
+                style={styles.settingsButton}
+                onPress={onOpenExport}
+                accessibilityLabel={t('export.openButtonLabel')}
+              >
+                <Text style={styles.settingsIcon}>📤</Text>
+              </Pressable>
+              <Pressable
+                style={styles.settingsButton}
+                onPress={onOpenSettings}
+                accessibilityLabel={t('settings.openButtonLabel')}
+              >
+                <Text style={styles.settingsIcon}>⚙</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.addRow}>

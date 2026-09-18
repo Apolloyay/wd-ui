@@ -27,6 +27,8 @@ import RichTextEditor from '../richtext/RichTextEditor';
 import { bodyToPlainText, plainTextToEditableHtml } from '../richtext/bodyText';
 import Button from '../theme/Button';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 import type { DiaryEntry, EntryComment, EntryImage, ImageOverlay } from '../types/entry';
 import type { ImageBlob } from '../types/image';
 import type { SavedPlace } from '../types/place';
@@ -45,6 +47,7 @@ const AUTOSAVE_DELAY_MS = 800;
 
 export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryType, onDone }: Props) {
   const { t, i18n } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [entryType, setEntryType] = useState<DiaryEntry['entryType']>(newEntryType ?? 'text');
   const [imageEditorBusy, setImageEditorBusy] = useState(false);
   const [imageEditorWarning, setImageEditorWarning] = useState<string | null>(null);
@@ -467,13 +470,24 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
   if (loading) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.screenWrap}>
+      {isPhoneWidth && (
+        <NavBar
+          title={entryId ? t('entry.editEntryTitle') : t('entry.newEntryTitle')}
+          onBack={handleDone}
+          backLabel={t('entry.done')}
+          right={<Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>}
+        />
+      )}
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Button title={t('entry.done')} onPress={handleDone} />
-          <Text style={styles.headerTitle}>{entryId ? t('entry.editEntryTitle') : t('entry.newEntryTitle')}</Text>
-          <Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>
-        </View>
+        {!isPhoneWidth && (
+          <View style={styles.header}>
+            <Button title={t('entry.done')} onPress={handleDone} />
+            <Text style={styles.headerTitle}>{entryId ? t('entry.editEntryTitle') : t('entry.newEntryTitle')}</Text>
+            <Text style={styles.saveStatus}>{saveStatusLabel(saveStatus, t)}</Text>
+          </View>
+        )}
         <TextInput
           style={styles.titleInput}
           placeholder={t('entry.titlePlaceholder')}
@@ -700,7 +714,8 @@ export default function EntryScreen({ encryptionKey, bookId, entryId, newEntryTy
           )}
         </Pressable>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -716,6 +731,7 @@ function saveStatusLabel(status: SaveStatus, t: (key: string) => string): string
 }
 
 const styles = StyleSheet.create({
+  screenWrap: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, backgroundColor: colors.background },
   // Matches HomeScreen's content cap so wide/ultrawide windows don't stretch
   // a single text column edge-to-edge.

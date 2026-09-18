@@ -2,24 +2,35 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import { colors } from '../theme/colors';
+import NavBar from '../theme/NavBar';
+import { useIsPhoneWidth } from '../theme/responsive';
 
 interface Props {
-  onBack: () => void;
+  // Undefined at phone width when this screen is a bottom-tab-bar peer of
+  // Books rather than pushed from it -- see App.tsx's showBackOnRootTabs.
+  onBack?: () => void;
   onLock: () => void;
   onSignOut: () => void;
 }
 
 export default function SettingsScreen({ onBack, onLock, onSignOut }: Props) {
   const { t } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
 
   return (
     <View style={styles.container}>
+      {isPhoneWidth && <NavBar title={t('settings.title')} onBack={onBack} backLabel={t('settings.back')} />}
       <View style={styles.content}>
-        <Pressable onPress={onBack} style={styles.backRow}>
-          <Text style={styles.backText}>{t('settings.back')}</Text>
-        </Pressable>
-
-        <Text style={styles.title}>{t('settings.title')}</Text>
+        {!isPhoneWidth && (
+          <>
+            {onBack && (
+              <Pressable onPress={onBack} style={styles.backRow}>
+                <Text style={styles.backText}>{t('settings.back')}</Text>
+              </Pressable>
+            )}
+            <Text style={styles.title}>{t('settings.title')}</Text>
+          </>
+        )}
 
         <Text style={styles.sectionLabel}>{t('settings.language')}</Text>
         <LanguageSwitcher />

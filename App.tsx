@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, SafeAreaView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { clearAccessToken } from './src/auth/session';
@@ -16,8 +17,12 @@ import SearchScreen from './src/screens/SearchScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import UnlockScreen from './src/screens/UnlockScreen';
 import { colors } from './src/theme/colors';
+import { useIsPhoneWidth } from './src/theme/responsive';
+import TabBar, { type TabBarItem } from './src/theme/TabBar';
 import type { DiaryBook } from './src/types/book';
 import type { DiaryEntry } from './src/types/entry';
+
+type RootTabKey = 'books' | 'search' | 'memories' | 'export' | 'settings';
 
 type Screen =
   | { name: 'loading' }
@@ -32,9 +37,51 @@ type Screen =
   | { name: 'entry'; book: DiaryBook; entryId: string | null; newEntryType?: DiaryEntry['entryType'] };
 
 export default function App() {
+  const { t } = useTranslation();
+  const isPhoneWidth = useIsPhoneWidth();
   const [screen, setScreen] = useState<Screen>({ name: 'loading' });
   const [encryptionKey, setEncryptionKey] = useState<EncryptionKey | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
+
+  // Root-level destinations reachable from an iOS-style bottom tab bar (at
+  // phone width only -- on a wide/desktop window these stay reachable via
+  // BooksScreen's icon row and each screen's own "‹ Books" back link).
+  const rootTabKey: RootTabKey | null =
+    screen.name === 'books' ||
+    screen.name === 'search' ||
+    screen.name === 'memories' ||
+    screen.name === 'export' ||
+    screen.name === 'settings'
+      ? screen.name
+      : null;
+
+  const tabItems: TabBarItem[] = [
+    { key: 'books', label: t('books.tabLabel'), icon: '📔' },
+    { key: 'search', label: t('search.openButtonLabel'), icon: '🔍' },
+    { key: 'memories', label: t('memories.openButtonLabel'), icon: '📅' },
+    { key: 'export', label: t('export.openButtonLabel'), icon: '📤' },
+    { key: 'settings', label: t('settings.openButtonLabel'), icon: '⚙' },
+  ];
+
+  const handleSelectRootTab = (key: string) => {
+    switch (key as RootTabKey) {
+      case 'books':
+        setScreen({ name: 'books' });
+        break;
+      case 'search':
+        setScreen({ name: 'search' });
+        break;
+      case 'memories':
+        setScreen({ name: 'memories' });
+        break;
+      case 'export':
+        setScreen({ name: 'export' });
+        break;
+      case 'settings':
+        setScreen({ name: 'settings' });
+        break;
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -97,57 +144,70 @@ export default function App() {
     );
   }
 
+  // Root tab screens hide their own "‹ Books" back link at phone width --
+  // they're tab-bar peers there, not screens pushed from Books -- and rely
+  // on the tab bar below to get back to Books instead.
+  const showBackOnRootTabs = !(isPhoneWidth && rootTabKey !== null);
+
   return (
     <SafeAreaView style={styles.flex}>
-      {screen.name === 'entry' ? (
-        <EntryScreen
-          encryptionKey={encryptionKey}
-          bookId={screen.book.id}
-          entryId={screen.entryId}
-          newEntryType={screen.newEntryType}
-          onDone={() => {
-            setRefreshToken((t) => t + 1); // also re-triggers a sync, see HomeScreen
-            setScreen({ name: 'entries', book: screen.book });
-          }}
-        />
-      ) : screen.name === 'entries' ? (
-        <HomeScreen
-          encryptionKey={encryptionKey}
-          book={screen.book}
-          refreshToken={refreshToken}
-          onBack={() => setScreen({ name: 'books' })}
-          onNewEntry={(entryType) => setScreen({ name: 'entry', book: screen.book, entryId: null, newEntryType: entryType })}
-          onOpenEntry={(id) => setScreen({ name: 'entry', book: screen.book, entryId: id })}
-        />
-      ) : screen.name === 'settings' ? (
-        <SettingsScreen
-          onBack={() => setScreen({ name: 'books' })}
-          onLock={handleLock}
-          onSignOut={handleUseDifferentAccount}
-        />
-      ) : screen.name === 'search' ? (
-        <SearchScreen
-          encryptionKey={encryptionKey}
-          onBack={() => setScreen({ name: 'books' })}
-          onOpenEntry={(book, entryId) => setScreen({ name: 'entry', book, entryId })}
-        />
-      ) : screen.name === 'memories' ? (
-        <MemoriesScreen
-          encryptionKey={encryptionKey}
-          onBack={() => setScreen({ name: 'books' })}
-          onOpenEntry={(book, entryId) => setScreen({ name: 'entry', book, entryId })}
-        />
-      ) : screen.name === 'export' ? (
-        <ExportScreen encryptionKey={encryptionKey} onBack={() => setScreen({ name: 'books' })} />
-      ) : (
-        <BooksScreen
-          encryptionKey={encryptionKey}
-          onOpenBook={(book) => setScreen({ name: 'entries', book })}
-          onOpenSettings={() => setScreen({ name: 'settings' })}
-          onOpenSearch={() => setScreen({ name: 'search' })}
-          onOpenMemories={() => setScreen({ name: 'memories' })}
-          onOpenExport={() => setScreen({ name: 'export' })}
-        />
+      <View style={styles.flex}>
+        {screen.name === 'entry' ? (
+          <EntryScreen
+            encryptionKey={encryptionKey}
+            bookId={screen.book.id}
+            entryId={screen.entryId}
+            newEntryType={screen.newEntryType}
+            onDone={() => {
+              setRefreshToken((t) => t + 1); // also re-triggers a sync, see HomeScreen
+              setScreen({ name: 'entries', book: screen.book });
+            }}
+          />
+        ) : screen.name === 'entries' ? (
+          <HomeScreen
+            encryptionKey={encryptionKey}
+            book={screen.book}
+            refreshToken={refreshToken}
+            onBack={() => setScreen({ name: 'books' })}
+            onNewEntry={(entryType) => setScreen({ name: 'entry', book: screen.book, entryId: null, newEntryType: entryType })}
+            onOpenEntry={(id) => setScreen({ name: 'entry', book: screen.book, entryId: id })}
+          />
+        ) : screen.name === 'settings' ? (
+          <SettingsScreen
+            onBack={showBackOnRootTabs ? () => setScreen({ name: 'books' }) : undefined}
+            onLock={handleLock}
+            onSignOut={handleUseDifferentAccount}
+          />
+        ) : screen.name === 'search' ? (
+          <SearchScreen
+            encryptionKey={encryptionKey}
+            onBack={showBackOnRootTabs ? () => setScreen({ name: 'books' }) : undefined}
+            onOpenEntry={(book, entryId) => setScreen({ name: 'entry', book, entryId })}
+          />
+        ) : screen.name === 'memories' ? (
+          <MemoriesScreen
+            encryptionKey={encryptionKey}
+            onBack={showBackOnRootTabs ? () => setScreen({ name: 'books' }) : undefined}
+            onOpenEntry={(book, entryId) => setScreen({ name: 'entry', book, entryId })}
+          />
+        ) : screen.name === 'export' ? (
+          <ExportScreen
+            encryptionKey={encryptionKey}
+            onBack={showBackOnRootTabs ? () => setScreen({ name: 'books' }) : undefined}
+          />
+        ) : (
+          <BooksScreen
+            encryptionKey={encryptionKey}
+            onOpenBook={(book) => setScreen({ name: 'entries', book })}
+            onOpenSettings={() => setScreen({ name: 'settings' })}
+            onOpenSearch={() => setScreen({ name: 'search' })}
+            onOpenMemories={() => setScreen({ name: 'memories' })}
+            onOpenExport={() => setScreen({ name: 'export' })}
+          />
+        )}
+      </View>
+      {isPhoneWidth && rootTabKey !== null && (
+        <TabBar items={tabItems} activeKey={rootTabKey} onSelect={handleSelectRootTab} />
       )}
       <StatusBar style="auto" />
     </SafeAreaView>
