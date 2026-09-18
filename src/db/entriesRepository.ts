@@ -1,7 +1,6 @@
-import '../crypto/randomPolyfill';
-import { randomBytes } from '@noble/hashes/utils.js';
 import { getDatabase } from './database';
 import { decrypt, encrypt, type EncryptionKey } from '../crypto/crypto';
+import { randomId } from '../crypto/randomId';
 import type { DiaryEntry } from '../types/entry';
 
 /**
@@ -10,12 +9,25 @@ import type { DiaryEntry } from '../types/entry';
  * plaintext DiaryEntry objects.
  */
 
-export async function listEntries(key: EncryptionKey): Promise<DiaryEntry[]> {
+/**
+ * bookId lives inside the encrypted JSON (like every other field here), not
+ * as a plaintext SQL column, so filtering by book happens in memory after
+ * decrypting — fine at diary scale, and keeps the server fully opaque to
+ * which entries belong to which book.
+ */
+export async function listEntries(key: EncryptionKey, bookId?: string): Promise<DiaryEntry[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<EncryptedEntryRecordRow>(
     'SELECT * FROM entries ORDER BY created_at DESC'
   );
-  return rows.map((row) => decryptRow(row, key));
+  const entries = rows.flatMap((row) => tryDecryptRow(row, key));
+  return bookId ? entries.filter((e) => e.bookId === bookId) : entries;
+}
+
+/** Number of entries currently filed under a book — used to guard book deletion. */
+export async function countEntriesInBook(bookId: string, key: EncryptionKey): Promise<number> {
+  const entries = await listEntries(key, bookId);
+  return entries.length;
 }
 
 export async function getEntry(id: string, key: EncryptionKey): Promise<DiaryEntry | null> {
@@ -28,16 +40,35 @@ export async function getEntry(id: string, key: EncryptionKey): Promise<DiaryEnt
 }
 
 export async function createEntry(
-  input: { title: string; body: string; mood?: string },
+  input: {
+    bookId: string;
+    entryType?: DiaryEntry['entryType'];
+    title: string;
+    body: string;
+    bodyFormat?: DiaryEntry['bodyFormat'];
+    mood?: string;
+    tags?: string[];
+    location?: DiaryEntry['location'];
+    weather?: DiaryEntry['weather'];
+  },
   key: EncryptionKey
 ): Promise<DiaryEntry> {
   const db = await getDatabase();
   const now = new Date().toISOString();
   const entry: DiaryEntry = {
-    id: cryptoRandomId(),
+    id: randomId(),
+    bookId: input.bookId,
+    entryType: input.entryType ?? 'text',
     title: input.title,
     body: input.body,
+    bodyFormat: input.bodyFormat ?? 'html',
     mood: input.mood,
+    tags: input.tags ?? [],
+    comments: [],
+    images: [],
+    location: input.location,
+    weather: input.weather,
+    hidden: false,
     createdAt: now,
     updatedAt: now,
   };
@@ -55,7 +86,9 @@ export async function createEntry(
 
 export async function updateEntry(
   id: string,
-  changes: Partial<Pick<DiaryEntry, 'title' | 'body' | 'mood'>>,
+  changes: Partial<
+    Pick<DiaryEntry, 'title' | 'body' | 'bodyFormat' | 'mood' | 'tags' | 'comments' | 'images' | 'location' | 'weather' | 'hidden'>
+  >,
   key: EncryptionKey
 ): Promise<DiaryEntry> {
   const existing = await getEntry(id, key);
@@ -161,16 +194,32 @@ export interface EncryptedEntryRecordRow {
 
 function decryptRow(row: EncryptedEntryRecordRow, key: EncryptionKey): DiaryEntry {
   const json = decrypt(row.ciphertext, row.nonce, key);
-  return JSON.parse(json) as DiaryEntry;
+  const parsed = JSON.parse(json) as DiaryEntry;
+  // Entries written before books/tags/comments/images/hidden existed won't
+  // have these fields — default them instead of letting old data crash.
+  return {
+    ...parsed,
+    bookId: parsed.bookId ?? '',
+    entryType: parsed.entryType ?? 'text',
+    bodyFormat: parsed.bodyFormat ?? 'plain',
+    tags: parsed.tags ?? [],
+    comments: parsed.comments ?? [],
+    images: (parsed.images ?? []).map((img) => ({ ...img, overlays: img.overlays ?? [] })),
+    hidden: parsed.hidden ?? false,
+  };
 }
 
-function cryptoRandomId(): string {
-  // Hand-rolled UUID v4 from CSPRNG bytes — avoids relying on
-  // crypto.randomUUID(), which react-native-get-random-values does not add
-  // (it only shims getRandomValues).
-  const bytes = randomBytes(16);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
-  const hex = Array.from(bytes, (b: number) => b.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+/**
+ * The local DB is shared across whichever account is currently unlocked on
+ * this device (see App.tsx's handleUseDifferentAccount) — rows left behind
+ * by a previous account fail AES-GCM's tag check under the current key.
+ * Skip those instead of letting one undecryptable row crash the whole list.
+ */
+function tryDecryptRow(row: EncryptedEntryRecordRow, key: EncryptionKey): DiaryEntry[] {
+  try {
+    return [decryptRow(row, key)];
+  } catch {
+    return [];
+  }
 }
+

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { login, register } from '../api/client';
 import { saveAccessToken } from '../auth/session';
@@ -15,6 +16,7 @@ interface Props {
  * fully offline using the salt + canary this screen stores.
  */
 export default function AuthScreen({ onAuthenticated }: Props) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +40,7 @@ export default function AuthScreen({ onAuthenticated }: Props) {
 
       onAuthenticated(key);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Check your connection and try again.');
+      setError(e instanceof Error ? e.message : t('auth.genericError'));
     } finally {
       setBusy(false);
     }
@@ -46,14 +48,14 @@ export default function AuthScreen({ onAuthenticated }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>We Diary</Text>
+      <Text style={styles.title}>{t('common.appName')}</Text>
       <Text style={styles.subtitle}>
-        {mode === 'login' ? 'Log in to sync your entries' : 'Create an account to sync your entries'}
+        {mode === 'login' ? t('auth.subtitleLogin') : t('auth.subtitleRegister')}
       </Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder={t('auth.emailPlaceholder')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -62,7 +64,7 @@ export default function AuthScreen({ onAuthenticated }: Props) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password (min 8 characters)"
+        placeholder={t('auth.passwordPlaceholder')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -79,12 +81,12 @@ export default function AuthScreen({ onAuthenticated }: Props) {
         {busy ? (
           <ActivityIndicator />
         ) : (
-          <Button title={mode === 'login' ? 'Log in' : 'Create account'} onPress={handleSubmit} />
+          <Button title={mode === 'login' ? t('auth.logIn') : t('auth.createAccount')} onPress={handleSubmit} />
         )}
       </View>
 
       <Text style={styles.link} onPress={() => setMode(mode === 'login' ? 'register' : 'login')}>
-        {mode === 'login' ? "Don't have an account? Create one" : 'Already have an account? Log in'}
+        {mode === 'login' ? t('auth.switchToRegister') : t('auth.switchToLogin')}
       </Text>
     </View>
   );

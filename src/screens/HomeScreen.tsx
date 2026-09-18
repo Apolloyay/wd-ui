@@ -1,70 +1,135 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { EncryptionKey } from '../crypto/crypto';
 import { listEntries } from '../db/entriesRepository';
-import { syncNow } from '../sync/syncService';
+import { bodyToPlainText } from '../richtext/bodyText';
+import { usePeriodicSync, type SyncStatus } from '../sync/useSync';
+import type { DiaryBook } from '../types/book';
 import type { DiaryEntry } from '../types/entry';
 
 interface Props {
   encryptionKey: EncryptionKey;
-  onNewEntry: () => void;
+  book: DiaryBook;
+  onBack: () => void;
+  onNewEntry: (entryType: DiaryEntry['entryType']) => void;
   onOpenEntry: (id: string) => void;
-  refreshToken: number; // bump this after creating/editing an entry to refetch + resync
+  refreshToken: number; // bump this after creating/editing an entry to refetch + force an extra sync
 }
 
-type SyncStatus = 'idle' | 'syncing' | 'synced' | 'offline' | 'signed-out' | 'error';
-
-export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, refreshToken }: Props) {
+export default function HomeScreen({ encryptionKey, book, onBack, onNewEntry, onOpenEntry, refreshToken }: Props) {
+  const { t, i18n } = useTranslation();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const result = await listEntries(encryptionKey);
+    const result = await listEntries(encryptionKey, book.id);
     setEntries(result);
     setLoading(false);
-  }, [encryptionKey]);
+  }, [encryptionKey, book.id]);
+
+  // Syncs on mount, on a timer, whenever the app returns to the foreground,
+  // and once more right after refreshToken bumps (saving an entry) -- sync
+  // failures never block reading what's already saved locally, since refresh
+  // reads from the local DB regardless of how the sync attempt went.
+  const syncStatus = usePeriodicSync(refresh, refreshToken);
 
   useEffect(() => {
-    // Sync first (may pull in changes from other devices), then load
-    // whatever's now in the local DB either way — sync failures shouldn't
-    // block reading what's already saved locally.
-    (async () => {
-      setSyncStatus('syncing');
-      const result = await syncNow();
-      setSyncStatus(result.ok ? 'synced' : mapFailureReason(result.reason));
-      await refresh();
-    })();
-  }, [refresh, refreshToken]);
+    setActiveTag(null); // reset tag filter when switching books
+  }, [book.id]);
+
+  const shownEntries = useMemo(
+    () => (showHidden ? entries : entries.filter((e) => !e.hidden)),
+    [entries, showHidden]
+  );
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of shownEntries) for (const tag of e.tags) set.add(tag);
+    return Array.from(set).sort();
+  }, [shownEntries]);
+
+  const visibleEntries = useMemo(
+    () => (activeTag ? shownEntries.filter((e) => e.tags.includes(activeTag)) : shownEntries),
+    [shownEntries, activeTag]
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
+        <Pressable onPress={onBack} style={styles.backRow}>
+          <Text style={styles.backText}>{t('entries.back')}</Text>
+        </Pressable>
+
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Your Entries</Text>
-            <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus)}</Text>
+            <Text style={styles.title}>{book.name}</Text>
+            <Text style={styles.syncStatus}>{syncStatusLabel(syncStatus, t)}</Text>
           </View>
-          <Pressable style={styles.newButton} onPress={onNewEntry}>
-            <Text style={styles.newButtonText}>+ New</Text>
-          </Pressable>
+          <View style={styles.newButtonRow}>
+            <Pressable style={styles.newButton} onPress={() => onNewEntry('text')}>
+              <Text style={styles.newButtonText}>{t('entries.newButton')}</Text>
+            </Pressable>
+            <Pressable style={[styles.newButton, styles.newButtonSecondary]} onPress={() => onNewEntry('image')}>
+              <Text style={styles.newButtonText}>{t('entries.newImageButton')}</Text>
+            </Pressable>
+          </View>
         </View>
 
-        {!loading && entries.length === 0 && (
-          <Text style={styles.empty}>No entries yet — tap "+ New" to write your first one.</Text>
+        {allTags.length > 0 && (
+          <FlatList
+            horizontal
+            data={allTags}
+            keyExtractor={(tag) => tag}
+            style={styles.tagFilterList}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item: tag }) => (
+              <Pressable
+                style={[styles.tagChip, activeTag === tag && styles.tagChipActive]}
+                onPress={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
+                <Text style={[styles.tagChipText, activeTag === tag && styles.tagChipTextActive]}>{tag}</Text>
+              </Pressable>
+            )}
+          />
+        )}
+
+        <Pressable onPress={() => setShowHidden((v) => !v)} style={styles.showHiddenToggle}>
+          <Text style={styles.showHiddenText}>{t(showHidden ? 'entries.hideHidden' : 'entries.showHidden')}</Text>
+        </Pressable>
+
+        {!loading && visibleEntries.length === 0 && (
+          <Text style={styles.empty}>
+            {shownEntries.length === 0 ? t('entries.emptyNoEntries') : t('entries.emptyNoTagMatch')}
+          </Text>
         )}
 
         <FlatList
-          data={entries}
+          data={visibleEntries}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Pressable style={styles.card} onPress={() => onOpenEntry(item.id)}>
-              <Text style={styles.cardTitle}>{item.title || '(untitled)'}</Text>
-              <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleString()}</Text>
+            <Pressable style={[styles.card, item.hidden && styles.cardHidden]} onPress={() => onOpenEntry(item.id)}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardTitle}>{item.title || t('entries.untitled')}</Text>
+                {item.images.length > 0 && <Text style={styles.photoBadge}>📷 {item.images.length}</Text>}
+                {item.location && <Text style={styles.photoBadge}>📍</Text>}
+                {item.hidden && <Text style={styles.hiddenBadge}>{t('entries.hiddenBadge')}</Text>}
+              </View>
+              <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleString(i18n.language)}</Text>
               <Text numberOfLines={2} style={styles.cardBody}>
-                {item.body}
+                {bodyToPlainText(item)}
               </Text>
+              {item.tags.length > 0 && (
+                <View style={styles.cardTags}>
+                  {item.tags.map((tag) => (
+                    <View key={tag} style={styles.cardTag}>
+                      <Text style={styles.cardTagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </Pressable>
           )}
         />
@@ -73,24 +138,18 @@ export default function HomeScreen({ encryptionKey, onNewEntry, onOpenEntry, ref
   );
 }
 
-function mapFailureReason(reason: 'signed-out' | 'network' | 'server'): SyncStatus {
-  if (reason === 'network') return 'offline';
-  if (reason === 'server') return 'error';
-  return 'signed-out';
-}
-
-function syncStatusLabel(status: SyncStatus): string {
+function syncStatusLabel(status: SyncStatus, t: (key: string) => string): string {
   switch (status) {
     case 'syncing':
-      return 'Syncing…';
+      return t('sync.syncing');
     case 'synced':
-      return 'Synced';
+      return t('sync.synced');
     case 'offline':
-      return 'Offline — changes saved on this device';
+      return t('sync.offline');
     case 'signed-out':
-      return '';
+      return t('sync.signedOut');
     case 'error':
-      return 'Sync error — will retry later';
+      return t('sync.error');
     default:
       return '';
   }
@@ -101,14 +160,46 @@ const styles = StyleSheet.create({
   // On wide/ultrawide desktop windows, a full-bleed edge-to-edge layout reads
   // poorly — cap the content width and center it like a normal web page.
   content: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', padding: 16 },
+  backRow: { marginBottom: 8 },
+  backText: { fontSize: 14, color: '#2d6cdf', fontWeight: '600' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   title: { fontSize: 24, fontWeight: '700' },
   syncStatus: { fontSize: 12, color: '#888', marginTop: 2 },
+  newButtonRow: { flexDirection: 'row', gap: 8 },
   newButton: { backgroundColor: '#2d6cdf', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  newButtonSecondary: { backgroundColor: '#5a8f7b' },
   newButtonText: { color: '#fff', fontWeight: '600' },
+  tagFilterList: { marginBottom: 12, flexGrow: 0 },
+  tagChip: {
+    backgroundColor: '#eef1f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginRight: 8,
+  },
+  tagChipActive: { backgroundColor: '#2d6cdf' },
+  tagChipText: { fontSize: 12, color: '#444' },
+  tagChipTextActive: { color: '#fff', fontWeight: '600' },
   empty: { textAlign: 'center', color: '#888', marginTop: 40 },
+  showHiddenToggle: { alignSelf: 'flex-start', marginBottom: 12 },
+  showHiddenText: { fontSize: 12, color: '#2d6cdf', fontWeight: '600' },
   card: { padding: 14, borderRadius: 10, backgroundColor: '#f4f4f6', marginBottom: 10 },
+  cardHidden: { opacity: 0.6 },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardTitle: { fontSize: 16, fontWeight: '600' },
+  photoBadge: { fontSize: 11, color: '#666' },
+  hiddenBadge: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#c0392b',
+    backgroundColor: '#fdecea',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
   cardDate: { fontSize: 12, color: '#888', marginBottom: 4 },
   cardBody: { fontSize: 14, color: '#333' },
+  cardTags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
+  cardTag: { backgroundColor: '#e3e8f0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  cardTagText: { fontSize: 11, color: '#444' },
 });

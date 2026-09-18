@@ -33,6 +33,33 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       version INTEGER NOT NULL DEFAULT 1,
       dirty INTEGER NOT NULL DEFAULT 1
     );
+    CREATE TABLE IF NOT EXISTS books (
+      id TEXT PRIMARY KEY NOT NULL,
+      ciphertext TEXT NOT NULL,
+      nonce TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      version INTEGER NOT NULL DEFAULT 1,
+      dirty INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS image_blobs (
+      id TEXT PRIMARY KEY NOT NULL,
+      ciphertext TEXT NOT NULL,
+      nonce TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      version INTEGER NOT NULL DEFAULT 1,
+      dirty INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS saved_places (
+      id TEXT PRIMARY KEY NOT NULL,
+      ciphertext TEXT NOT NULL,
+      nonce TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      version INTEGER NOT NULL DEFAULT 1,
+      dirty INTEGER NOT NULL DEFAULT 1
+    );
     CREATE TABLE IF NOT EXISTS meta (
       key TEXT PRIMARY KEY NOT NULL,
       value TEXT NOT NULL

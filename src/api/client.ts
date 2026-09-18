@@ -32,6 +32,30 @@ export interface SyncResponseBody {
   syncedAt: string;
 }
 
+/** Same wire shape as EntryPayload -- books sync as their own opaque-blob stream. */
+export type BookPayload = EntryPayload;
+
+export interface BookSyncResponseBody {
+  serverChanges: BookPayload[];
+  syncedAt: string;
+}
+
+/** Same wire shape as EntryPayload -- image blobs sync as their own opaque-blob stream. */
+export type ImagePayload = EntryPayload;
+
+export interface ImageSyncResponseBody {
+  serverChanges: ImagePayload[];
+  syncedAt: string;
+}
+
+/** Same wire shape as EntryPayload -- saved places sync as their own opaque-blob stream. */
+export type PlacePayload = EntryPayload;
+
+export interface PlaceSyncResponseBody {
+  serverChanges: PlacePayload[];
+  syncedAt: string;
+}
+
 export async function register(email: string, password: string): Promise<AuthResponse> {
   const res = await apiFetch('/auth/register', {
     method: 'POST',
@@ -58,6 +82,48 @@ export async function syncEntries(
   lastSyncedAt: string | null
 ): Promise<SyncResponseBody> {
   const res = await apiFetch('/entries/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ changed, lastSyncedAt }),
+  });
+  if (!res.ok) throw new Error(await describeError(res, 'Sync failed'));
+  return res.json();
+}
+
+export async function syncBooks(
+  accessToken: string,
+  changed: BookPayload[],
+  lastSyncedAt: string | null
+): Promise<BookSyncResponseBody> {
+  const res = await apiFetch('/books/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ changed, lastSyncedAt }),
+  });
+  if (!res.ok) throw new Error(await describeError(res, 'Sync failed'));
+  return res.json();
+}
+
+export async function syncImages(
+  accessToken: string,
+  changed: ImagePayload[],
+  lastSyncedAt: string | null
+): Promise<ImageSyncResponseBody> {
+  const res = await apiFetch('/images/sync', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ changed, lastSyncedAt }),
+  });
+  if (!res.ok) throw new Error(await describeError(res, 'Sync failed'));
+  return res.json();
+}
+
+export async function syncPlaces(
+  accessToken: string,
+  changed: PlacePayload[],
+  lastSyncedAt: string | null
+): Promise<PlaceSyncResponseBody> {
+  const res = await apiFetch('/places/sync', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ changed, lastSyncedAt }),

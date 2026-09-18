@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { deriveKeyFromPassphrase, verifyCanary, type EncryptionKey } from '../crypto/crypto';
 import { loadCanary, loadSalt } from '../crypto/keyStore';
@@ -14,6 +15,7 @@ interface Props {
  * re-derive the key and check it against the canary; no network call.
  */
 export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Props) {
+  const { t } = useTranslation();
   const [passphrase, setPassphrase] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,12 +26,12 @@ export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Prop
     try {
       const [salt, canary] = await Promise.all([loadSalt(), loadCanary()]);
       if (!salt || !canary) {
-        setError('No account found on this device — use "Log in / create account" below.');
+        setError(t('unlock.noAccountError'));
         return;
       }
       const key = deriveKeyFromPassphrase(passphrase, salt);
       if (!verifyCanary(key, canary)) {
-        setError('Incorrect passphrase.');
+        setError(t('unlock.incorrectPassphrase'));
         return;
       }
       onUnlocked(key);
@@ -40,11 +42,11 @@ export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Prop
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>We Diary</Text>
-      <Text style={styles.subtitle}>Enter your passphrase to unlock</Text>
+      <Text style={styles.title}>{t('common.appName')}</Text>
+      <Text style={styles.subtitle}>{t('unlock.subtitle')}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Passphrase"
+        placeholder={t('unlock.passphrasePlaceholder')}
         secureTextEntry
         value={passphrase}
         onChangeText={setPassphrase}
@@ -57,10 +59,10 @@ export default function UnlockScreen({ onUnlocked, onUseDifferentAccount }: Prop
           "flicker" on a near-instant (offline) check. */}
       <View style={styles.errorSlot}>{error && <Text style={styles.error}>{error}</Text>}</View>
       <View style={styles.buttonSlot}>
-        {busy ? <ActivityIndicator /> : <Button title="Unlock" onPress={handleUnlock} />}
+        {busy ? <ActivityIndicator /> : <Button title={t('unlock.unlock')} onPress={handleUnlock} />}
       </View>
       <Text style={styles.link} onPress={onUseDifferentAccount}>
-        Log in / create a different account
+        {t('unlock.useDifferentAccount')}
       </Text>
     </View>
   );

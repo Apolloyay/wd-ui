@@ -23,7 +23,20 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "We Diary needs access to your photos so you can attach them to diary entries."
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "We Diary uses your location to attach where an entry was written, only when you ask it to."
+        }
+      ]
     ]
   }
 }
